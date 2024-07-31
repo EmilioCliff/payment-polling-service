@@ -1,14 +1,26 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/pb"
 	"github.com/gin-gonic/gin"
 )
+
+func (server *Server) registerUser(ctx *gin.Context) {
+	registerUserViagRPC(ctx, server)
+	// registerUserViaHTTP(ctx, server)
+}
+
+func (server *Server) loginUser(ctx *gin.Context) {
+	loginUserViagRPC(ctx, server)
+	// loginUserViaHTTP(ctx, server)
+}
 
 type authRegisterResponse struct {
 	FullName  string    `json:"full_name"`
@@ -22,17 +34,7 @@ type authServiceRegisterResponse struct {
 	Data    authRegisterResponse `json:"data,omitempty"`
 }
 
-// registerUser sends a POST request to the authApp at "http://authApp:5000/auth/register"
-// with the request body from the current context. It then reads the response body and
-// unmarshals it into an authServiceRegisterResponse struct. If the status field of the
-// response is false, it returns an error response. Otherwise, it returns the response
-// body as a JSON object with a status code of 200.
-//
-// Parameters:
-// - ctx: A gin Context object representing the current HTTP request and response.
-//
-// Return type: None.
-func (server *Server) registerUser(ctx *gin.Context) {
+func registerUserViaHTTP(ctx *gin.Context, server *Server) {
 	request, err := http.NewRequest("POST", "http://authApp:5000/auth/register", ctx.Request.Body)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "Couldn't create request to authApp"))
@@ -69,6 +71,35 @@ func (server *Server) registerUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, authServiceResponse)
 }
 
+type registerUserRequest struct {
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func registerUserViagRPC(ctx *gin.Context, server *Server) {
+	var req registerUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, server.errorResponse(err, "invalid request body"))
+		return
+	}
+
+	c, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	rsp, err := server.authgRPClient.RegisterUser(c, &pb.RegisterUserRequest{
+		Fullname: req.FullName,
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error from gRPC server"))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, rsp)
+}
+
 type authLoginResponse struct {
 	AccessToken string    `json:"access_token"`
 	FullName    string    `json:"full_name"`
@@ -82,17 +113,7 @@ type authServiceLoginResponse struct {
 	Data    authLoginResponse `json:"data,omitempty"`
 }
 
-// loginUser handles the login request from the client and sends a POST request to the authApp
-// to authenticate the user. It reads the response body and unmarshals it into an
-// authServiceLoginResponse struct. If the status field of the response is false, it returns
-// an error response. Otherwise, it returns the response body as a JSON object with a status code
-// of 200.
-//
-// Parameters:
-// - ctx: A gin Context object representing the current HTTP request and response.
-//
-// Return type: None.
-func (server *Server) loginUser(ctx *gin.Context) {
+func loginUserViaHTTP(ctx *gin.Context, server *Server) {
 	request, err := http.NewRequest("POST", "http://authApp:5000/auth/login", ctx.Request.Body)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "Couldn't create request to authApp"))
@@ -127,4 +148,31 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, jsonFromAuthService)
+}
+
+type loginUserRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+func loginUserViagRPC(ctx *gin.Context, server *Server) {
+	var req loginUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, server.errorResponse(err, "invalid request body"))
+		return
+	}
+
+	c, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	rsp, err := server.authgRPClient.LoginUser(c, &pb.LoginUserRequest{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error from gRPC server"))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, rsp)
 }

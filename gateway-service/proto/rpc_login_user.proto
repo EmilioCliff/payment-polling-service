@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+import "rpc_register_user.proto";
+
+option go_package = "github.com/EmilioCliff/payment-polling-app/authentication-service/pb";
+
+message LoginUserRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginUserResponse {
+    string access_token = 1;
+    google.protobuf.Timestamp expiration_at = 2;
+    RegisterUserResponse data = 3;
+}   
+
+

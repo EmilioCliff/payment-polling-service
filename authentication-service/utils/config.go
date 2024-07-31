@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	PORT              string        `mapstructure:"PORT"`
+	HTTP_PORT         string        `mapstructure:"HTTP_PORT"`
+	GRPC_PORT         string        `mapstructure:"GRPC_PORT"`
 	POSTGRES_USER     string        `mapstructure:"POSTGRES_USER"`
 	POSTGRES_PASSWORD string        `mapstructure:"POSTGRES_PASSWORD"`
 	POSTGRES_DB       string        `mapstructure:"POSTGRES_DB"`

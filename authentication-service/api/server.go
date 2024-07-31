@@ -2,11 +2,13 @@ package api
 
 import (
 	db "github.com/EmilioCliff/payment-polling-app/authentication-service/db/sqlc"
+	"github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/utils"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
+	pb.UnimplementedAuthenticationServiceServer
 	router *gin.Engine
 	config utils.Config
 	store  *db.Queries

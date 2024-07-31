@@ -12,4 +12,6 @@ COPY --from=builder /app/db/migrations /app/db/migrations
 COPY --from=builder /app/utils/* /app/utils/
 
 EXPOSE 5000
+EXPOSE 5050
+
 CMD ["./authApp"]

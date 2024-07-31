@@ -3,14 +3,18 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/api"
 	db "github.com/EmilioCliff/payment-polling-app/authentication-service/db/sqlc"
+	"github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/utils"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // main is the entry point of the application.
@@ -58,12 +62,44 @@ func main() {
 		return
 	}
 
+	go runGinServer(config, store, maker)
+
+	rungRPCServer(config, store, maker)
+}
+
+func runGinServer(config utils.Config, store *db.Queries, maker *utils.JWTMaker) {
 	server, err := api.NewServer(config, store, *maker)
 	if err != nil {
 		log.Printf("Failed to start new server instance to db: %s", err)
 		return
 	}
 
-	log.Printf("Starting Authentication Server at port: %s", config.PORT)
-	server.Start(config.PORT)
+	log.Printf("Starting Authentication Server at port: %s", config.HTTP_PORT)
+	server.Start(config.HTTP_PORT)
+}
+
+func rungRPCServer(config utils.Config, store *db.Queries, maker *utils.JWTMaker) {
+	grpcServer := grpc.NewServer()
+
+	server, err := api.NewServer(config, store, *maker)
+	if err != nil {
+		log.Printf("Failed to start new server instance to db: %s", err)
+		return
+	}
+
+	pb.RegisterAuthenticationServiceServer(grpcServer, server)
+
+	reflection.Register(grpcServer)
+
+	listener, err := net.Listen("tcp", config.GRPC_PORT)
+	if err != nil {
+		log.Printf("Failed to start grpc server on port: %s", err)
+		return
+	}
+
+	log.Printf("Starting gRPC server on port: %s", config.GRPC_PORT)
+	if err = grpcServer.Serve(listener); err != nil {
+		log.Printf("Failed to start gRPC server: %s", err)
+		return
+	}
 }

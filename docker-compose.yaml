@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+
+  gateway-service:
+    container_name: gatewayApp
+    build:
+      context: ./gateway-service
+      dockerfile: ./gateway-service.dockerfile
+    environment:
+      - PORT=5000
+    ports:
+      - "8080:5000"
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  authentication-servie:
+    container_name: authApp
+    build: 
+      context: ./authentication-service
+      dockerfile: ./authentication-service.dockerfile
+    ports:
+      - "8081:5000"
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      authPostgres:
+        condition: service_healthy
+    
+  authPostgres:
+    container_name: authPostgres
+    image: postgres:alpine3.19
+    environment:
+      - POSTGRES_PASSWORD=auth-secret
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=authdb
+      - PGUSER=postgres
+    ports:
+      - "5432:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 80s

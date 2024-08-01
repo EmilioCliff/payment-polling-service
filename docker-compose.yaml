@@ -14,6 +14,20 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+    depends_on:
+      - authentication-servie
+      - payments-service
+
+  payments-service:
+    container_name: paymentApp
+    build: 
+      context: ./payments-service
+      dockerfile: ./payments-service.dockerfile
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      - rabbitmq
 
   authentication-servie:
     container_name: authApp
@@ -47,3 +61,13 @@ services:
       timeout: 30s
       retries: 5
       start_period: 80s
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.13.3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    deploy:
+      mode: replicated
+      replicas: 1

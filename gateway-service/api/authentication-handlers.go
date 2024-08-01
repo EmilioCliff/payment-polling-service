@@ -84,7 +84,7 @@ func registerUserViagRPC(ctx *gin.Context, server *Server) {
 		return
 	}
 
-	c, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	rsp, err := server.authgRPClient.RegisterUser(c, &pb.RegisterUserRequest{
@@ -162,7 +162,7 @@ func loginUserViagRPC(ctx *gin.Context, server *Server) {
 		return
 	}
 
-	c, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	rsp, err := server.authgRPClient.LoginUser(c, &pb.LoginUserRequest{

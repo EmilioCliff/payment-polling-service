@@ -2,7 +2,9 @@ package api
 
 import (
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pb"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/utils"
 	"github.com/gin-gonic/gin"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -10,18 +12,22 @@ import (
 type Server struct {
 	router        *gin.Engine
 	authgRPClient pb.AuthenticationServiceClient
+	amqpChannel   *amqp.Channel
+	config        utils.Config
 }
 
-func NewServer() (*Server, error) {
-	conn, err := grpc.NewClient("authApp:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewServer(amqpChannel *amqp.Channel, config utils.Config) (*Server, error) {
+	gRPCconn, err := grpc.NewClient("authApp:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
 
-	client := pb.NewAuthenticationServiceClient(conn)
+	client := pb.NewAuthenticationServiceClient(gRPCconn)
 
 	server := &Server{
 		authgRPClient: client,
+		amqpChannel:   amqpChannel,
+		config:        config,
 	}
 
 	server.setRoutes()

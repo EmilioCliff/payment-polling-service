@@ -17,6 +17,9 @@ type Config struct {
 	TOKEN_DURATION    time.Duration `mapstructure:"TOKEN_DURATION"`
 	PRIVATE_KEY_PATH  string        `mapstructure:"PRIVATE_KEY_PATH"`
 	PUBLIC_KEY_PATH   string        `mapstructure:"PUBLIC_KEY_PATH"`
+	AUTH_QUEUE_NAME   string        `mapstructure:"AUTH_QUEUE_NAME"`
+	RABBITMQ_URL      string        `mapstructure:"RABBITMQ_URL"`
+	EXCH              string        `mapstructure:"EXCH"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

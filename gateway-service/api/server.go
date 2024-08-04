@@ -1,6 +1,8 @@
 package api
 
 import (
+	"sync"
+
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/utils"
 	"github.com/gin-gonic/gin"
@@ -14,6 +16,7 @@ type Server struct {
 	authgRPClient pb.AuthenticationServiceClient
 	amqpChannel   *amqp.Channel
 	config        utils.Config
+	responseMap   sync.Map
 }
 
 func NewServer(amqpChannel *amqp.Channel, config utils.Config) (*Server, error) {

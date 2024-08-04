@@ -5,21 +5,24 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/utils"
 	"github.com/gin-gonic/gin"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Server struct {
 	pb.UnimplementedAuthenticationServiceServer
-	router *gin.Engine
-	config utils.Config
-	store  *db.Queries
-	maker  utils.JWTMaker
+	router     *gin.Engine
+	config     utils.Config
+	store      *db.Queries
+	maker      utils.JWTMaker
+	rabbitConn *amqp.Connection
 }
 
 func NewServer(config utils.Config, store *db.Queries, maker utils.JWTMaker) (*Server, error) {
 	server := &Server{
-		config: config,
-		store:  store,
-		maker:  maker,
+		config:     config,
+		store:      store,
+		maker:      maker,
+		rabbitConn: nil,
 	}
 	server.setRoutes()
 

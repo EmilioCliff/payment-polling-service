@@ -81,14 +81,14 @@ func (app *App) SetConsumer(topics []string) error {
 			var payload Payload
 			err := json.Unmarshal(msg.Body, &payload)
 			if err != nil {
-				log.Printf("failed to unmarshal message: %s", err)
+				log.Printf("failed to unmarshal message in payment service: %s", err)
 				msg.Nack(false, true)
 				return
 			}
 
 			response := distributeTask(payload)
 
-			log.Printf("Message acknowledged: %v", msg.DeliveryTag)
+			log.Printf("Message acknowledged from payment service: %v", msg.DeliveryTag)
 			msg.Ack(false)
 
 			err = ch.PublishWithContext(ctx,

@@ -3,10 +3,12 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -16,28 +18,16 @@ type Payload struct {
 }
 
 type initiatePaymentRequest struct {
-	Amount        int64  `json:"amount"`
-	PaymentMethod string `json:"payment_method"`
+	Amount        int64  `json:"amount" binding:"required"`
+	PaymentMethod string `json:"payment_method" binding:"required"`
 }
 
-func (server *Server) initiatePayment(ctx *gin.Context) {
+func (server *Server) initiatePaymentViaRabbitMQ(ctx *gin.Context) {
 	var req initiatePaymentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, server.errorResponse(err, "invalid request body"))
 		return
 	}
-
-	// payload, err := json.Marshal(req)
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error marshalling request body"))
-	// 	return
-	// }
-
-	// data, err := ctx.GetRawData()
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error reading request body"))
-	// 	return
-	// }
 
 	payload := Payload{
 		Name: "initiate_payment",
@@ -50,10 +40,18 @@ func (server *Server) initiatePayment(ctx *gin.Context) {
 		return
 	}
 
+	correlationID := uuid.New().String()
+	responseChannel := make(chan amqp.Delivery, 1)
+	defer close(responseChannel)
+
+	server.responseMap.Store(correlationID, responseChannel)
+	defer server.responseMap.Delete(correlationID)
+
 	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// routing key is the same correlation id
+	log.Println("payload from initiate", payload)
+
 	err = server.amqpChannel.PublishWithContext(c,
 		server.config.EXCH,          // exchange
 		"payments.initiate_payment", // routing key
@@ -61,8 +59,8 @@ func (server *Server) initiatePayment(ctx *gin.Context) {
 		false,                       // immediate
 		amqp.Publishing{
 			ContentType:   "text/plain",
-			CorrelationId: "123",
-			ReplyTo:       INITIATE_PAYMENT,
+			CorrelationId: correlationID,
+			ReplyTo:       "gateway.initiate_payment",
 			Body:          payloadRabitData,
 		})
 	if err != nil {
@@ -70,9 +68,12 @@ func (server *Server) initiatePayment(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"success-sent-raw-data": req})
-}
-
-func (server *Server) paymentStatus(ctx *gin.Context) {
-
+	select {
+	case msg := <-responseChannel:
+		if msg.CorrelationId == correlationID {
+			ctx.JSON(http.StatusOK, gin.H{"payment response": string(msg.Body)})
+		}
+	case <-time.After(5 * time.Second):
+		ctx.JSON(http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"})
+	}
 }

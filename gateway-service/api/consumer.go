@@ -2,6 +2,8 @@ package api
 
 import (
 	"log"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const (
@@ -9,11 +11,23 @@ const (
 )
 
 func (server *Server) SetConsumer(topics []string) error {
+	q, err := server.amqpChannel.QueueDeclare(
+		server.config.EXCLUSIVE_QUEUE_NAME, // name
+		false,                              // durable
+		false,                              // delete when unused
+		false,                              // exclusive
+		false,                              // no-wait
+		nil,                                // arguments
+	)
+	if err != nil {
+		return err
+	}
+
 	for _, topic := range topics {
 		if err := server.amqpChannel.QueueBind(
-			server.config.QUEUE_NAME, // queue name
-			topic,                    // routing key
-			server.config.EXCH,       // exchange
+			q.Name,             // queue name
+			topic,              // routing key
+			server.config.EXCH, // exchange
 			false,
 			nil,
 		); err != nil {
@@ -22,13 +36,13 @@ func (server *Server) SetConsumer(topics []string) error {
 	}
 
 	messages, err := server.amqpChannel.Consume(
-		server.config.QUEUE_NAME, // queue
-		"gateway_service",        // consumer
-		true,                     // auto ack
-		false,                    // exclusive
-		false,                    // no local
-		false,                    // no wait
-		nil,                      // args
+		q.Name,            // queue
+		"gateway_service", // consumer
+		true,              // auto ack
+		false,             // exclusive
+		false,             // no local
+		false,             // no wait
+		nil,               // args
 	)
 	if err != nil {
 		return err
@@ -38,11 +52,9 @@ func (server *Server) SetConsumer(topics []string) error {
 
 	go func() {
 		for msg := range messages {
-
-			switch msg.CorrelationId {
-			case "123":
-				// receive the same message back that is sent
-				log.Printf("this is the response(same as sent/testing: initiate payment) received from the message queue: %s, %s", msg.Body, msg.CorrelationId)
+			if ch, ok := server.responseMap.Load(msg.CorrelationId); ok {
+				ch.(chan amqp.Delivery) <- msg
+				log.Println("Message acknoledged from callback queue", msg.DeliveryTag)
 			}
 		}
 	}()

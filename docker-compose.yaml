@@ -41,8 +41,8 @@ services:
       mode: replicated
       replicas: 1
     depends_on:
-      authPostgres:
-        condition: service_healthy
+      - authPostgres
+      - payments-service
     
   authPostgres:
     container_name: authPostgres

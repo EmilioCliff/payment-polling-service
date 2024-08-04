@@ -40,7 +40,7 @@ func main() {
 		return
 	}
 
-	go server.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments"})
+	go server.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments", "gateway.register_user", "gateway.login_user"})
 
 	log.Printf("Starting Gateway Server at port: %s", os.Getenv("PORT"))
 	server.Start(fmt.Sprintf("0.0.0.0:%s", os.Getenv("PORT")))

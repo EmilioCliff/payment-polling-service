@@ -1,7 +1,5 @@
 package api
 
-// CbCeJA4lYNxVMxb1tOC1 -- username
-// ZNhXNJibSnkaW0eo3MzF2f1oFXfRnWJU1Z0JwfER -- password
 import (
 	"database/sql"
 	"net/http"

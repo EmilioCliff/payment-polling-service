@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/EmilioCliff/payment-polling-service/grpc-shared/pb";
+
+message User {
+    string fullname = 1;
+    string email = 2;
+    string password = 3;
+    string access_token = 4;
+    string payd_username = 5;
+    string username_api_key = 6;
+    string password_api_key = 7;
+    google.protobuf.Timestamp created_at = 8;
+}

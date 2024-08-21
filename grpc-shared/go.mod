@@ -1,4 +1,4 @@
-module github.com/EmilioCliff/payment-polling-app/grpc-shared
+module github.com/EmilioCliff/payment-polling-service/grpc-shared
 
 go 1.21.6
 

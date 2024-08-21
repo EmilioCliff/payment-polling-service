@@ -5,7 +5,7 @@ package pb;
 import "google/protobuf/timestamp.proto";
 import "rpc_register_user.proto";
 
-option go_package = "github.com/EmilioCliff/payment-polling-app/grpc-shared/pb";
+option go_package = "github.com/EmilioCliff/payment-polling-service/grpc-shared/pb";
 
 message LoginUserRequest {
     string email = 1;

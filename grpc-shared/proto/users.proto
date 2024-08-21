@@ -4,7 +4,7 @@ package pb;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/EmilioCliff/payment-polling-app/grpc-shared/pb";
+option go_package = "github.com/EmilioCliff/payment-polling-service/grpc-shared/pb";
 
 message User {
     string fullname = 1;

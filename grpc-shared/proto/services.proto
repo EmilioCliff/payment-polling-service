@@ -5,7 +5,7 @@ package pb;
 import "rpc_register_user.proto";
 import "rpc_login_user.proto";
 
-option go_package = "github.com/EmilioCliff/payment-polling-app/grpc-shared/pb";
+option go_package = "github.com/EmilioCliff/payment-polling-service/grpc-shared/pb";
 
 
 service authenticationService {

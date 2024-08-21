@@ -2,8 +2,9 @@ package api
 
 import (
 	db "github.com/EmilioCliff/payment-polling-app/authentication-service/db/sqlc"
-	"github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
+	// "github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/utils"
+	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
 )

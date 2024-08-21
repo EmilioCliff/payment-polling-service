@@ -3,8 +3,8 @@ package api
 import (
 	"sync"
 
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/utils"
+	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"

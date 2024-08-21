@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/pb"
+	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/status"
 )

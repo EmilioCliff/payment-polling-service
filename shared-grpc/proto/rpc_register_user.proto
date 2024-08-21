@@ -10,6 +10,9 @@ message RegisterUserRequest {
     string fullname = 1;
     string email = 2;
     string password = 3;
+    string payd_username = 4;
+    string payd_password_api_key = 5;
+    string payd_username_api_key = 6;
 }
 
 message RegisterUserResponse {

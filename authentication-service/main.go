@@ -10,10 +10,11 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/api"
 	db "github.com/EmilioCliff/payment-polling-app/authentication-service/db/sqlc"
-	"github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
+
+	// "github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/utils"
 
-	// _ "github.com/EmilioCliff/payment-polling-service/grpc-shared/pb"
+	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"

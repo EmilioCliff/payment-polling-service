@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
+	// "github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
+	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

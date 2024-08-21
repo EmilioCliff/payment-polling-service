@@ -15,7 +15,6 @@ import (
 // "authentication.register_user", "authentication.login_user"
 
 func (server *Server) registerUserViaRabbit(ctx *gin.Context) {
-	log.Println("in register handler for rabbit")
 	var req registerUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Println("failed to bind json")
@@ -44,8 +43,6 @@ func (server *Server) registerUserViaRabbit(ctx *gin.Context) {
 	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Println("payload from register", payload)
-
 	err = server.amqpChannel.PublishWithContext(c,
 		server.config.EXCH,             // exchange
 		"authentication.register_user", // routing key
@@ -65,7 +62,20 @@ func (server *Server) registerUserViaRabbit(ctx *gin.Context) {
 	select {
 	case msg := <-responseChannel:
 		if msg.CorrelationId == correlationID {
-			ctx.JSON(http.StatusOK, gin.H{"auth response": string(msg.Body)})
+			var authResp authRegisterResponse
+
+			err := json.Unmarshal(msg.Body, &authResp)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+				return
+			}
+
+			if authResp.Message != "" {
+				ctx.JSON(authResp.Status, gin.H{"error": authResp.Message})
+				return
+			}
+
+			ctx.JSON(http.StatusOK, authResp)
 		}
 	case <-time.After(5 * time.Second):
 		ctx.JSON(http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"})
@@ -119,8 +129,22 @@ func loginUserViaRabbit(ctx *gin.Context, server *Server) {
 	select {
 	case msg := <-responseChannel:
 		if msg.CorrelationId == correlationID {
-			ctx.JSON(http.StatusOK, gin.H{"response": string(msg.Body)})
+			var loginResp authLoginResponse
+
+			err := json.Unmarshal(msg.Body, &loginResp)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+				return
+			}
+
+			if loginResp.Message != "" {
+				ctx.JSON(loginResp.Status, gin.H{"error": loginResp.Message})
+				return
+			}
+
+			ctx.JSON(http.StatusOK, loginResp)
 		}
+
 	case <-time.After(5 * time.Second):
 		ctx.JSON(http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"})
 	}

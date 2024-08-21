@@ -10,16 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type registerUserRequest struct {
+	FullName string `json:"full_name" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 type authRegisterResponse struct {
 	FullName  string    `json:"full_name"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
-}
-
-type authServiceRegisterResponse struct {
-	Status  bool                 `json:"status"`
-	Message string               `json:"message,omitempty"`
-	Data    authRegisterResponse `json:"data,omitempty"`
+	Message   string    `json:"message,omitempty"`
+	Status    int       `json:"status,omitempty"`
 }
 
 func registerUserViaHTTP(ctx *gin.Context, server *Server) {
@@ -43,7 +45,7 @@ func registerUserViaHTTP(ctx *gin.Context, server *Server) {
 		return
 	}
 
-	var authServiceResponse authServiceRegisterResponse
+	var authServiceResponse authRegisterResponse
 
 	err = json.Unmarshal(responseBody, &authServiceResponse)
 	if err != nil {
@@ -51,7 +53,7 @@ func registerUserViaHTTP(ctx *gin.Context, server *Server) {
 		return
 	}
 
-	if !authServiceResponse.Status {
+	if response.StatusCode != http.StatusOK {
 		ctx.JSON(response.StatusCode, server.errorResponse(errors.New(authServiceResponse.Message), "Failed to register new user"))
 		return
 	}
@@ -59,17 +61,18 @@ func registerUserViaHTTP(ctx *gin.Context, server *Server) {
 	ctx.JSON(http.StatusOK, authServiceResponse)
 }
 
+type loginUserRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 type authLoginResponse struct {
 	AccessToken string    `json:"access_token"`
 	FullName    string    `json:"full_name"`
 	Email       string    `json:"email"`
 	CreatedAt   time.Time `json:"created_at"`
-}
-
-type authServiceLoginResponse struct {
-	Status  bool              `json:"status"`
-	Message string            `json:"message,omitempty"`
-	Data    authLoginResponse `json:"data,omitempty"`
+	Message     string    `json:"message,omitempty"`
+	Status      int       `json:"status,omitempty"`
 }
 
 func loginUserViaHTTP(ctx *gin.Context, server *Server) {
@@ -93,7 +96,7 @@ func loginUserViaHTTP(ctx *gin.Context, server *Server) {
 		return
 	}
 
-	var jsonFromAuthService authServiceLoginResponse
+	var jsonFromAuthService authLoginResponse
 
 	err = json.Unmarshal(responseBody, &jsonFromAuthService)
 	if err != nil {
@@ -101,8 +104,8 @@ func loginUserViaHTTP(ctx *gin.Context, server *Server) {
 		return
 	}
 
-	if !jsonFromAuthService.Status {
-		ctx.JSON(response.StatusCode, server.errorResponse(errors.New(jsonFromAuthService.Message), "Failed to register new user"))
+	if response.StatusCode != http.StatusOK {
+		ctx.JSON(response.StatusCode, server.errorResponse(errors.New(jsonFromAuthService.Message), "Failed to login user"))
 		return
 	}
 

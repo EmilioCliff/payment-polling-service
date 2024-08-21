@@ -13,6 +13,7 @@ func initiatePayment(data map[string]interface{}) []byte {
 	// if err != nil {
 	// 	return nil
 	// }
+
 	rsp, err := json.Marshal(data)
 	if err != nil {
 		return []byte("error marshalling request body")

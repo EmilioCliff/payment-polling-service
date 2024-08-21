@@ -11,7 +11,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func main() {
+func maini() {
 	config, err := utils.LoadConfig(".")
 	if err != nil {
 		log.Printf("Failed to load config files: %s", err)

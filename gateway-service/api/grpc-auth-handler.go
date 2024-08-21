@@ -7,13 +7,8 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pb"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/status"
 )
-
-type registerUserRequest struct {
-	FullName string `json:"full_name" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
 
 func registerUserViagRPC(ctx *gin.Context, server *Server) {
 	var req registerUserRequest
@@ -31,16 +26,20 @@ func registerUserViagRPC(ctx *gin.Context, server *Server) {
 		Password: req.Password,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error from gRPC server"))
-		return
+		st, ok := status.FromError(err)
+		if ok {
+			grpcCode := st.Code()
+			grpcMessage := st.Message()
+			httpCode, errRsp := server.grpcErrorResponse(grpcCode, grpcMessage)
+			ctx.JSON(httpCode, errRsp)
+			return
+		} else {
+			ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "Non-gRPC error occurred"))
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, rsp)
-}
-
-type loginUserRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
 }
 
 func loginUserViagRPC(ctx *gin.Context, server *Server) {
@@ -58,8 +57,17 @@ func loginUserViagRPC(ctx *gin.Context, server *Server) {
 		Password: req.Password,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error from gRPC server"))
-		return
+		st, ok := status.FromError(err)
+		if ok {
+			grpcCode := st.Code()
+			grpcMessage := st.Message()
+			httpCode, errRsp := server.grpcErrorResponse(grpcCode, grpcMessage)
+			ctx.JSON(httpCode, errRsp)
+			return
+		} else {
+			ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "Non-gRPC error occurred"))
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, rsp)

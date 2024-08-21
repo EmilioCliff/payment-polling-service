@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -119,7 +120,6 @@ func (server *Server) SetConsumer(topics []string, rabbitConn *amqp.Connection) 
 					}
 				}
 			}
-			log.Println("response sent successfully from auth service")
 		}
 	}()
 
@@ -133,10 +133,33 @@ func (server *Server) SetConsumer(topics []string, rabbitConn *amqp.Connection) 
 func (server *Server) distributeTask(payload Payload) []byte {
 	switch payload.Name {
 	case "register_user":
-		log.Println("registering user in auth seerver ditributor")
-		return server.rabbitRegisterUser(payload.Data.(map[string]interface{}))
+		dataBytes, err := json.Marshal(payload.Data)
+		if err != nil {
+			return server.errorRabbitMQResponse(ErrorMarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		var req registerUserRequest
+		err = json.Unmarshal(dataBytes, &req)
+		if err != nil {
+			return server.errorRabbitMQResponse(ErrorUnmarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		return server.rabbitRegisterUser(req)
+
 	case "login_user":
-		return server.rabbitLoginUser(payload.Data.(map[string]interface{}))
+		dataBytes, err := json.Marshal(payload.Data)
+		if err != nil {
+			return server.errorRabbitMQResponse(ErrorMarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		var req loginUserRequest
+		err = json.Unmarshal(dataBytes, &req)
+		if err != nil {
+			return server.errorRabbitMQResponse(ErrorUnmarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		return server.rabbitLoginUser(req)
+
 	default:
 		return nil
 	}

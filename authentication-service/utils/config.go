@@ -20,6 +20,7 @@ type Config struct {
 	AUTH_QUEUE_NAME   string        `mapstructure:"AUTH_QUEUE_NAME"`
 	RABBITMQ_URL      string        `mapstructure:"RABBITMQ_URL"`
 	EXCH              string        `mapstructure:"EXCH"`
+	ENCRYPTION_KEY    string        `mapstructure:"ENCRYPTION_KEY"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

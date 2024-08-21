@@ -24,10 +24,23 @@ func (server *Server) registerUserGeneral(req registerUserRequest, ctx context.C
 		return registerResponse{}, errorHelper("error hashing password", err, http.StatusInternalServerError, codes.Internal)
 	}
 
+	encryptPassApi, err := utils.Encrypt(req.PasswordApiKey, []byte(server.config.ENCRYPTION_KEY))
+	if err != nil {
+		return registerResponse{}, errorHelper("error encrypting password api key", err, http.StatusInternalServerError, codes.Internal)
+	}
+
+	encryptUserApi, err := utils.Encrypt(req.UsernameApiKey, []byte(server.config.ENCRYPTION_KEY))
+	if err != nil {
+		return registerResponse{}, errorHelper("error encrypting user api key", err, http.StatusInternalServerError, codes.Internal)
+	}
+
 	user, err := server.store.RegisterUser(ctx, db.RegisterUserParams{
-		FullName: req.FullName,
-		Email:    req.Email,
-		Password: hashPassword,
+		FullName:        req.FullName,
+		Email:           req.Email,
+		Password:        hashPassword,
+		PaydUsername:    req.PaydUsername,
+		PaydUsernameKey: encryptUserApi,
+		PaydPasswordKey: encryptPassApi,
 	})
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {

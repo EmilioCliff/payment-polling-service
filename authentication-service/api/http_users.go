@@ -7,9 +7,12 @@ import (
 )
 
 type registerUserRequest struct {
-	FullName string `json:"full_name" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	FullName       string `json:"full_name" binding:"required"`
+	PaydUsername   string `json:"payd_username"`
+	Email          string `json:"email" binding:"required"`
+	Password       string `json:"password" binding:"required"`
+	UsernameApiKey string `json:"username_api_key"`
+	PasswordApiKey string `json:"password_api_key"`
 }
 
 func (server *Server) registerUser(ctx *gin.Context) {

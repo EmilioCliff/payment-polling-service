@@ -1,8 +1,8 @@
 -- name: RegisterUser :one
 INSERT INTO users (
-    full_name, email, password
+    full_name, payd_username, email, password, payd_username_key, payd_password_key
 ) VALUES (
-    $1, $2, $3
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 

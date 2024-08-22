@@ -21,5 +21,5 @@ func (server *Server) initiatePayment(ctx *gin.Context) {
 }
 
 func (server *Server) paymentStatus(ctx *gin.Context) {
-
+	server.pollTransactionViaRabbitMQ(ctx)
 }

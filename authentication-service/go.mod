@@ -3,6 +3,7 @@ module github.com/EmilioCliff/payment-polling-app/authentication-service
 go 1.21.6
 
 require (
+	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822075525-b8a22d69e841
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
@@ -18,7 +19,6 @@ require (
 )
 
 require (
-	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822071325-64032985c0cc // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

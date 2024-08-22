@@ -159,6 +159,7 @@ func (app *App) distributeTask(payload Payload) []byte {
 		return app.initiatePaymentHandler(req)
 
 	case "polling_transaction":
+		log.Print("In here for polling transaction")
 		dataBytes, err := json.Marshal(payload.Data)
 		if err != nil {
 			return app.errorRabbitMQResponse(ErrorMarshalingData, "error marshaling response", http.StatusInternalServerError)

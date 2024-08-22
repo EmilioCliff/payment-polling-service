@@ -10,23 +10,19 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/payment-service/app"
 	db "github.com/EmilioCliff/payment-polling-app/payment-service/db/sqlc"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/utils"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func maini() {
+func main() {
 	config, err := utils.LoadConfig(".")
 	if err != nil {
 		log.Printf("Failed to load config files: %s", err)
 		return
 	}
-
-	postgresConn, err := pgxpool.New(context.Background(), config.DB_URL)
-	if err != nil {
-		log.Printf("Failed to connect to db: %s", err)
-		return
-	}
-	defer postgresConn.Close()
 
 	// conn, err := amqp.Dial(config.RABBITMQ_URL)
 	conn, err := connectToRabit(config.RABBITMQ_URL)
@@ -36,9 +32,31 @@ func maini() {
 	}
 	defer conn.Close()
 
+	postgresConn, err := pgxpool.New(context.Background(), config.DB_URL)
+	if err != nil {
+		log.Printf("Failed to connect to db: %s", err)
+		return
+	}
+	defer postgresConn.Close()
+
+	migration, err := migrate.New("file://db/migrations", config.DB_URL)
+	if err != nil {
+		log.Printf("Failed to load migration: %s", err)
+		return
+	}
+
+	if err := migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Printf("Failed to run migrate up: %s", err)
+		return
+	}
+
 	store := db.New(postgresConn)
 
-	app := app.NewApp(conn, config, store)
+	app, err := app.NewApp(conn, config, store)
+	if err != nil {
+		log.Printf("Failed to create new app: %s", err)
+		return
+	}
 
 	app.SetConsumer([]string{"payments.initiate_payment", "payments.poll_payments"})
 }

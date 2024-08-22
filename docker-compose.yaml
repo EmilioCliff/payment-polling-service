@@ -27,6 +27,7 @@ services:
       mode: replicated
       replicas: 1
     depends_on:
+      - paymentPostgres
       - rabbitmq
 
   authentication-servie:
@@ -54,6 +55,24 @@ services:
       - PGUSER=postgres
     ports:
       - "5432:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
+
+  paymentPostgres:
+    container_name: paymentPostgres
+    image: postgres:alpine3.19
+    environment:
+      - POSTGRES_PASSWORD=payment-secret
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=paymentdb
+      - PGUSER=postgres
+    ports:
+      - "5433:5432"
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]

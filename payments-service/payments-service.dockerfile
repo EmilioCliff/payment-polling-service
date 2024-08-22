@@ -7,5 +7,6 @@ FROM alpine:3.20
 WORKDIR /app
 COPY --from=builder /app/paymentApp .
 COPY --from=builder /app/config.env .
+COPY --from=builder /app/db/migrations /app/db/migrations
 
 CMD ["./paymentApp"]

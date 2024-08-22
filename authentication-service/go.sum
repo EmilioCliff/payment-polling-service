@@ -1,9 +1,7 @@
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25UVaW/CKtUDjefjrs0SPonmDGUVOYP0=
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
-github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822070552-c3e41440a779 h1:tHs3c80mMcAlOYGjTgxrLfLMm6R8BTgWH4RFIMbfd+4=
-github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822070552-c3e41440a779/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
-github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822071325-64032985c0cc h1:MrY6YQfhrMM53+kq9ugQxpuedm/WiH1ZhhXoiOOHnFU=
-github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822071325-64032985c0cc/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
+github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822075525-b8a22d69e841 h1:Dmi4cGZyslJBZmEoXPbajAfpFObjRPWGIowZjaEOGas=
+github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822075525-b8a22d69e841/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=

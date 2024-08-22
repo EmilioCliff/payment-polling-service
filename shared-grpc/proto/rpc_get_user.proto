@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb";
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string payd_username = 1;
+    string payd_username_key =2;
+    string payd_password_key = 3;
+}

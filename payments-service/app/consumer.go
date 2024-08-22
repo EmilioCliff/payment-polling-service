@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -86,7 +87,7 @@ func (app *App) SetConsumer(topics []string) error {
 				return
 			}
 
-			response := distributeTask(payload)
+			response := app.distributeTask(payload)
 
 			log.Printf("Message acknowledged from payment service: %v", msg.DeliveryTag)
 			msg.Ack(false)
@@ -141,10 +142,36 @@ func (app *App) SetConsumer(topics []string) error {
 	return nil
 }
 
-func distributeTask(payload Payload) []byte {
+func (app *App) distributeTask(payload Payload) []byte {
 	switch payload.Name {
 	case "initiate_payment":
-		return initiatePayment(payload.Data.(map[string]interface{}))
+		dataBytes, err := json.Marshal(payload.Data)
+		if err != nil {
+			return app.errorRabbitMQResponse(ErrorMarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		var req initiatePaymentRequest
+		err = json.Unmarshal(dataBytes, &req)
+		if err != nil {
+			return app.errorRabbitMQResponse(ErrorUnmarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		return app.initiatePaymentHandler(req)
+
+	case "polling_transaction":
+		dataBytes, err := json.Marshal(payload.Data)
+		if err != nil {
+			return app.errorRabbitMQResponse(ErrorMarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		var req pollingTransactionRequest
+		err = json.Unmarshal(dataBytes, &req)
+		if err != nil {
+			return app.errorRabbitMQResponse(ErrorUnmarshalingData, "error marshaling response", http.StatusInternalServerError)
+		}
+
+		return app.pollingTransactionHandler(req)
+
 	default:
 		return nil
 	}

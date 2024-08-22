@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/payment-service/app"
+	db "github.com/EmilioCliff/payment-polling-app/payment-service/db/sqlc"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/utils"
+	"github.com/jackc/pgx/v5/pgxpool"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -18,6 +21,13 @@ func maini() {
 		return
 	}
 
+	postgresConn, err := pgxpool.New(context.Background(), config.DB_URL)
+	if err != nil {
+		log.Printf("Failed to connect to db: %s", err)
+		return
+	}
+	defer postgresConn.Close()
+
 	// conn, err := amqp.Dial(config.RABBITMQ_URL)
 	conn, err := connectToRabit(config.RABBITMQ_URL)
 	if err != nil {
@@ -26,9 +36,11 @@ func maini() {
 	}
 	defer conn.Close()
 
-	app := app.NewApp(conn, config)
+	store := db.New(postgresConn)
 
-	app.SetConsumer([]string{"payments.initiate_payment", "poll_payments"})
+	app := app.NewApp(conn, config, store)
+
+	app.SetConsumer([]string{"payments.initiate_payment", "payments.poll_payments"})
 }
 
 func connectToRabit(uri string) (*amqp.Connection, error) {

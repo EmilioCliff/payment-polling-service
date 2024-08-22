@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 
 	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"google.golang.org/grpc/codes"
@@ -59,13 +58,8 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 	return rsp, nil
 }
 
-func (server *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserRequest, error) {
-	idInt, err := strconv.Atoi(req.GetUserId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user id")
-	}
-
-	user, err := server.store.GetUser(ctx, int64(idInt))
+func (server *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	user, err := server.store.GetUser(ctx, req.GetUserId())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "user not found")
@@ -73,5 +67,11 @@ func (server *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, "internal server error")
 	}
 
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+	rsp := &pb.GetUserResponse{
+		PaydUsername:    user.PaydUsername,
+		PaydUsernameKey: user.PaydUsernameKey,
+		PaydPasswordKey: user.PaydPasswordKey,
+	}
+
+	return rsp, nil
 }

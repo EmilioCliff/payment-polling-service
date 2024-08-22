@@ -59,6 +59,7 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 
 func (server *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserRequest, error) {
 
+	// change id to int64
 	server.store.GetUser(ctx, req.GetUserId())
 
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")

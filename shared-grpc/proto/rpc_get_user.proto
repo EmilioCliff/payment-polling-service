@@ -5,7 +5,7 @@ package pb;
 option go_package = "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb";
 
 message GetUserRequest {
-    string user_id = 1;
+    int64 user_id = 1;
 }
 
 message GetUserResponse {

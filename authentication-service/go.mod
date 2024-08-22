@@ -17,8 +17,6 @@ require (
 	google.golang.org/protobuf v1.34.2
 )
 
-require github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822035759-4075a5ce62c3
-
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect

@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"strconv"
 
 	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"google.golang.org/grpc/codes"
@@ -58,9 +60,18 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 }
 
 func (server *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserRequest, error) {
+	idInt, err := strconv.Atoi(req.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user id")
+	}
 
-	// change id to int64
-	server.store.GetUser(ctx, req.GetUserId())
+	user, err := server.store.GetUser(ctx, int64(idInt))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "internal server error")
+	}
 
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }

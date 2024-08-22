@@ -11,5 +11,5 @@ message GetUserRequest {
 message GetUserResponse {
     string payd_username = 1;
     string payd_username_key =2;
-    string payd_password_key = 3;
+    string payd_password_key = 4;
 }

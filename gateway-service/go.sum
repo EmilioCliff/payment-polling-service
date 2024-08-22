@@ -1,5 +1,7 @@
 github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821150947-5be83cbfacac h1:FEg8KmoT09o69tr99ouOffAG67KBUDnZEbaahatTNts=
 github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821150947-5be83cbfacac/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
+github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae h1:2gQQlDYpoqk2rL8HJ7/qaTjA83MfPG8kS/fZ2I5x/pY=
+github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
 github.com/bytedance/sonic v1.11.6/go.mod h1:LysEHSvpvDySVdC2f87zGWf6CIKJcAvqab1ZaiQtds4=
 github.com/bytedance/sonic/loader v0.1.1 h1:c+e5Pt1k/cy5wMveRDyk2X4B9hF4g7an8N3zCYjJFNM=

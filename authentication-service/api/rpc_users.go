@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	// "github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -12,9 +11,12 @@ import (
 
 func (server *Server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
 	reqData := registerUserRequest{
-		FullName: req.GetFullname(),
-		Email:    req.GetEmail(),
-		Password: req.GetPassword(),
+		FullName:       req.GetFullname(),
+		Email:          req.GetEmail(),
+		Password:       req.GetPassword(),
+		PasswordApiKey: req.GetPaydPasswordApiKey(),
+		UsernameApiKey: req.GetPaydUsernameApiKey(),
+		PaydUsername:   req.GetPaydUsername(),
 	}
 
 	rspData, errRsp := server.registerUserGeneral(reqData, ctx)

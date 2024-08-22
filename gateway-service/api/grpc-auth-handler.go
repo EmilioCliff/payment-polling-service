@@ -21,9 +21,12 @@ func registerUserViagRPC(ctx *gin.Context, server *Server) {
 	defer cancel()
 
 	rsp, err := server.authgRPClient.RegisterUser(c, &pb.RegisterUserRequest{
-		Fullname: req.FullName,
-		Email:    req.Email,
-		Password: req.Password,
+		Fullname:           req.FullName,
+		Email:              req.Email,
+		Password:           req.Password,
+		PaydUsername:       req.PaydUsername,
+		PaydPasswordApiKey: req.PaydPasswordApiKey,
+		PaydUsernameApiKey: req.PaydUsernameApiKey,
 	})
 	if err != nil {
 		st, ok := status.FromError(err)

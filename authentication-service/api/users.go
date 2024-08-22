@@ -34,6 +34,10 @@ func (server *Server) registerUserGeneral(req registerUserRequest, ctx context.C
 		return registerResponse{}, errorHelper("error encrypting user api key", err, http.StatusInternalServerError, codes.Internal)
 	}
 
+	if ctx.Err() == context.Canceled || ctx.Err() == context.DeadlineExceeded {
+		return registerResponse{}, errorHelper("error creating user", err, http.StatusInternalServerError, codes.Internal)
+	}
+
 	user, err := server.store.RegisterUser(ctx, db.RegisterUserParams{
 		FullName:        req.FullName,
 		Email:           req.Email,

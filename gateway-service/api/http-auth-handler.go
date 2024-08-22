@@ -11,9 +11,12 @@ import (
 )
 
 type registerUserRequest struct {
-	FullName string `json:"full_name" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	FullName           string `json:"full_name" binding:"required"`
+	Email              string `json:"email" binding:"required"`
+	Password           string `json:"password" binding:"required"`
+	PaydUsername       string `json:"payd_username" binding:"required"`
+	PaydPasswordApiKey string `json:"payd_password_api_key" binding:"required"`
+	PaydUsernameApiKey string `json:"payd_username_api_key" binding:"required"`
 }
 
 type authRegisterResponse struct {

@@ -11,7 +11,6 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/api"
 	db "github.com/EmilioCliff/payment-polling-app/authentication-service/db/sqlc"
 
-	// "github.com/EmilioCliff/payment-polling-app/authentication-service/pb"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/utils"
 
 	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"

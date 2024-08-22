@@ -8,11 +8,11 @@ import (
 
 type registerUserRequest struct {
 	FullName       string `json:"full_name" binding:"required"`
-	PaydUsername   string `json:"payd_username"`
+	PaydUsername   string `json:"payd_username" binding:"required"`
 	Email          string `json:"email" binding:"required"`
 	Password       string `json:"password" binding:"required"`
-	UsernameApiKey string `json:"username_api_key"`
-	PasswordApiKey string `json:"password_api_key"`
+	UsernameApiKey string `json:"payd_username_api_key" binding:"required"`
+	PasswordApiKey string `json:"payd_password_api_key" binding:"required"`
 }
 
 func (server *Server) registerUser(ctx *gin.Context) {

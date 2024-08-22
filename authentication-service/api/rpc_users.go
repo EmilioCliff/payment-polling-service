@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -56,4 +57,6 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 	return rsp, nil
 }
 
-func (server *Server) GetUser()
+func (server *Server) GetUser(context.Context, *pb.GetUserRequest) (*pb.GetUserRequest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}

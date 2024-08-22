@@ -55,3 +55,5 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 
 	return rsp, nil
 }
+
+func (server *Server) GetUser()

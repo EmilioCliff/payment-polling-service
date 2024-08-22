@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	AuthenticationService_RegisterUser_FullMethodName = "/pb.authenticationService/RegisterUser"
 	AuthenticationService_LoginUser_FullMethodName    = "/pb.authenticationService/LoginUser"
+	AuthenticationService_GetUser_FullMethodName      = "/pb.authenticationService/GetUser"
 )
 
 // AuthenticationServiceClient is the client API for AuthenticationService service.
@@ -29,6 +30,7 @@ const (
 type AuthenticationServiceClient interface {
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserRequest, error)
 }
 
 type authenticationServiceClient struct {
@@ -57,12 +59,22 @@ func (c *authenticationServiceClient) LoginUser(ctx context.Context, in *LoginUs
 	return out, nil
 }
 
+func (c *authenticationServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserRequest, error) {
+	out := new(GetUserRequest)
+	err := c.cc.Invoke(ctx, AuthenticationService_GetUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthenticationServiceServer is the server API for AuthenticationService service.
 // All implementations must embed UnimplementedAuthenticationServiceServer
 // for forward compatibility
 type AuthenticationServiceServer interface {
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
+	GetUser(context.Context, *GetUserRequest) (*GetUserRequest, error)
 	mustEmbedUnimplementedAuthenticationServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedAuthenticationServiceServer) RegisterUser(context.Context, *R
 }
 func (UnimplementedAuthenticationServiceServer) LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoginUser not implemented")
+}
+func (UnimplementedAuthenticationServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserRequest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
 func (UnimplementedAuthenticationServiceServer) mustEmbedUnimplementedAuthenticationServiceServer() {}
 
@@ -125,6 +140,24 @@ func _AuthenticationService_LoginUser_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthenticationService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthenticationService_GetUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthenticationService_ServiceDesc is the grpc.ServiceDesc for AuthenticationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var AuthenticationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LoginUser",
 			Handler:    _AuthenticationService_LoginUser_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _AuthenticationService_GetUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

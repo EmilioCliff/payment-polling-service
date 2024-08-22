@@ -3,7 +3,7 @@ module github.com/EmilioCliff/payment-polling-app/authentication-service
 go 1.21.6
 
 require (
-	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae
+	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822035759-4075a5ce62c3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1

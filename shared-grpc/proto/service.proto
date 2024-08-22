@@ -12,6 +12,6 @@ option go_package = "github.com/EmilioCliff/payment-polling-service/shared-grpc/
 service authenticationService {
     rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {}
     rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {}
-    rpc GetUser(GetUserRequest) returns (GetUserRequest) {}
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
 }
 

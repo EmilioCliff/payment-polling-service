@@ -1,2 +1,5 @@
 test.go
 **/data/
+my_rsa_key
+my_rsa_key.pub
+my_rsa_key.pub.pem

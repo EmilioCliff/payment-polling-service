@@ -23,12 +23,15 @@ services:
     build: 
       context: ./payments-service
       dockerfile: ./payments-service.dockerfile
+    ports:
+      - "3030:3030"
     deploy:
       mode: replicated
       replicas: 1
     depends_on:
       - paymentPostgres
       - rabbitmq
+      - redis
 
   authentication-servie:
     container_name: authApp
@@ -87,6 +90,17 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  redis:
+    container_name: redis
+    image: redis:7.2.4-alpine3.19
+    ports:
+      - "6379:6379"
+    restart: always
     deploy:
       mode: replicated
       replicas: 1

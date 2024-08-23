@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
 )
 
@@ -43,5 +44,12 @@ func errorHelper(msg string, err error, status int, code codes.Code) generalErro
 		Error:      err,
 		HttpStatus: status,
 		GrpcCode:   code,
+	}
+}
+
+func (app *App) errorResponse(err error, msg string) gin.H {
+	return gin.H{
+		"message": msg,
+		"error":   err.Error(),
 	}
 }

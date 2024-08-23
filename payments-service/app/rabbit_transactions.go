@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"time"
 )
@@ -34,8 +33,6 @@ func (app *App) initiatePaymentHandler(data initiatePaymentRequest) []byte {
 func (app *App) pollingTransactionHandler(data pollingTransactionRequest) []byte {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	log.Println("polling transaction")
 
 	rspData, errRsp := app.PollingTransaction(ctx, data)
 	if !errRsp.Status {

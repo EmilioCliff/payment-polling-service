@@ -10,14 +10,16 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/payment-service/app"
 	db "github.com/EmilioCliff/payment-polling-app/payment-service/db/sqlc"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/utils"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/workers"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func main() {
+func maini() {
 	config, err := utils.LoadConfig(".")
 	if err != nil {
 		log.Printf("Failed to load config files: %s", err)
@@ -58,7 +60,15 @@ func main() {
 		return
 	}
 
-	app.SetConsumer([]string{"payments.initiate_payment", "payments.poll_payments"})
+	go startAsynqProcessor(store)
+	go app.SetConsumer([]string{"payments.initiate_payment", "payments.poll_payments"})
+
+	log.Println("starting payment service server on port: 3030")
+	err = app.Start("0.0.0.0:3030")
+	if err != nil {
+		log.Printf("Failed to start app: %s", err)
+		return
+	}
 }
 
 func connectToRabit(uri string) (*amqp.Connection, error) {
@@ -83,4 +93,18 @@ func connectToRabit(uri string) (*amqp.Connection, error) {
 	}
 
 	return connection, nil
+}
+
+func startAsynqProcessor(store *db.Queries) {
+	redisOpt := asynq.RedisClientOpt{
+		Addr: "redis:6379",
+		DB:   1,
+	}
+	processor := workers.NewRedisTaskProcessor(store, &redisOpt)
+	err := processor.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("asynq processor started successfully")
 }

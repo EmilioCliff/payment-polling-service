@@ -11,13 +11,15 @@ import (
 )
 
 type Transaction struct {
-	TransactionID uuid.UUID `json:"transaction_id"`
-	UserID        int64     `json:"user_id"`
-	Action        string    `json:"action"`
-	Amount        int32     `json:"amount"`
-	PhoneNumber   string    `json:"phone_number"`
-	NetworkNode   string    `json:"network_node"`
-	Narration     string    `json:"narration"`
-	Status        bool      `json:"status"`
-	CreatedAt     time.Time `json:"created_at"`
+	TransactionID      uuid.UUID `json:"transaction_id"`
+	PaydTransactionRef string    `json:"payd_transaction_ref"`
+	UserID             int64     `json:"user_id"`
+	Action             string    `json:"action"`
+	Amount             int32     `json:"amount"`
+	PhoneNumber        string    `json:"phone_number"`
+	NetworkNode        string    `json:"network_node"`
+	Narration          string    `json:"narration"`
+	Status             bool      `json:"status"`
+	UpdatedAt          time.Time `json:"updated_at"`
+	CreatedAt          time.Time `json:"created_at"`
 }

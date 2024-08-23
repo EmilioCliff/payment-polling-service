@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -24,6 +23,14 @@ type initiatePaymentRequest struct {
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	NetworkCode string `json:"network_code" binding:"required"`
 	Naration    string `json:"naration" binding:"required"`
+}
+
+type initiatePaymentResponse struct {
+	TransactionID string `json:"transaction_id"`
+	PaymentStatus bool   `json:"payment_status"`
+	Action        string `json:"action"`
+	Message       string `json:"message,omitempty"`
+	Status        int    `json:"status,omitempty"`
 }
 
 func (server *Server) initiatePaymentViaRabbitMQ(ctx *gin.Context) {
@@ -73,7 +80,20 @@ func (server *Server) initiatePaymentViaRabbitMQ(ctx *gin.Context) {
 	select {
 	case msg := <-responseChannel:
 		if msg.CorrelationId == correlationID {
-			ctx.JSON(http.StatusOK, gin.H{"payment response": string(msg.Body)})
+			var paymentResp initiatePaymentResponse
+
+			err := json.Unmarshal(msg.Body, &paymentResp)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error unmarshalling response"))
+				return
+			}
+
+			if paymentResp.Message != "" {
+				ctx.JSON(paymentResp.Status, gin.H{"error": paymentResp.Message})
+				return
+			}
+
+			ctx.JSON(http.StatusOK, paymentResp)
 		}
 	case <-time.After(5 * time.Second):
 		ctx.JSON(http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"})
@@ -86,6 +106,22 @@ type pollingTransactionRequest struct {
 
 type pollingTransactionRabbitRequest struct {
 	TransactionId string `json:"transaction_id"`
+}
+
+type pollingTransactionResponse struct {
+	TransactionID      uuid.UUID `json:"transaction_id"`
+	PaydTransactionRef string    `json:"payd_transaction_ref"`
+	Action             string    `json:"action"`
+	Amount             int64     `json:"amount"`
+	PhoneNumber        string    `json:"phone_number"`
+	NetworkCode        string    `json:"network_code"`
+	Naration           string    `json:"naration"`
+	PaymentStatus      bool      `json:"payment_status"`
+	PaydUsername       string    `json:"payd_username"`
+	PaydUsernameApiKey string    `json:"payd_username_api_key"`
+	PaydPasswordApiKey string    `json:"payd_password_api_key"`
+	Message            string    `json:"message,omitempty"`
+	Status             int       `json:"status,omitempty"`
 }
 
 func (server *Server) pollTransactionViaRabbitMQ(ctx *gin.Context) {
@@ -101,8 +137,6 @@ func (server *Server) pollTransactionViaRabbitMQ(ctx *gin.Context) {
 			TransactionId: req.TransactionId,
 		},
 	}
-
-	log.Printf("%v", payload)
 
 	payloadRabitData, err := json.Marshal(payload)
 	if err != nil {
@@ -139,7 +173,20 @@ func (server *Server) pollTransactionViaRabbitMQ(ctx *gin.Context) {
 	select {
 	case msg := <-responseChannel:
 		if msg.CorrelationId == correlationID {
-			ctx.JSON(http.StatusOK, gin.H{"payment response": string(msg.Body)})
+			var pollResp pollingTransactionResponse
+
+			err := json.Unmarshal(msg.Body, &pollResp)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, server.errorResponse(err, "error unmarshalling response"))
+				return
+			}
+
+			if pollResp.Message != "" {
+				ctx.JSON(pollResp.Status, gin.H{"error": pollResp.Message})
+				return
+			}
+
+			ctx.JSON(http.StatusOK, pollResp)
 		}
 	case <-time.After(5 * time.Second):
 		ctx.JSON(http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"})

@@ -1,13 +1,13 @@
 package workers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -50,8 +50,6 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
-	log.Println("Processing task: ", task.Type(), taskPayload)
-
 	url := "https://api.mypayd.app/api/v2/payments"
 	method := "POST"
 
@@ -62,7 +60,7 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 		"phone_number": taskPayload.PhoneNumber,
 		"narration":    taskPayload.Naration,
 		"currency":     "KES",
-		"callback_url": "https://4343-41-90-180-76.ngrok-free.app/" + taskPayload.TransactionID.String(),
+		"callback_url": fmt.Sprintf("https://2049-41-90-180-76.ngrok-free.app/callback/%v", taskPayload.TransactionID.String()),
 	}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -70,14 +68,17 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 		return fmt.Errorf("Failed to marshal payload: %w", err)
 	}
 
+	jsonString := strings.NewReader(string(jsonPayload))
+
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonPayload))
-
-	req.SetBasicAuth(taskPayload.PaydUsernameApiKey, taskPayload.PaydPasswordApiKey)
-
+	req, err := http.NewRequest(method, url, jsonString)
 	if err != nil {
 		return fmt.Errorf("Failed to create request: %w", err)
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(taskPayload.PaydUsernameApiKey, taskPayload.PaydPasswordApiKey)
+
 	res, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("Failed to send request: %w", err)

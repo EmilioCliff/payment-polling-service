@@ -25,8 +25,8 @@ func registerUserViagRPC(ctx *gin.Context, server *Server) {
 		Email:              req.Email,
 		Password:           req.Password,
 		PaydUsername:       req.PaydUsername,
-		PaydPasswordApiKey: req.PaydPasswordApiKey,
-		PaydUsernameApiKey: req.PaydUsernameApiKey,
+		PaydPasswordApiKey: req.PasswordApiKey,
+		PaydUsernameApiKey: req.UsernameApiKey,
 	})
 	if err != nil {
 		st, ok := status.FromError(err)

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 func (server *Server) registerUserViaRabbit(ctx *gin.Context) {
 	var req registerUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		log.Println("failed to bind json")
 		ctx.JSON(http.StatusBadRequest, server.errorResponse(err, "invalid request body"))
 		return
 	}

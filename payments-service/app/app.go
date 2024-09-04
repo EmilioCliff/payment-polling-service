@@ -1,6 +1,8 @@
 package app
 
 import (
+	"net/http"
+
 	db "github.com/EmilioCliff/payment-polling-app/payment-service/db/sqlc"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/utils"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/workers"
@@ -52,6 +54,9 @@ func NewApp(conn *amqp.Connection, config utils.Config, store *db.Queries) (*App
 func (app *App) setRoutes() {
 	r := gin.Default()
 
+	r.GET("/healthcheck", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+	})
 	r.POST("/callback/:id", app.callBack)
 
 	app.router = r

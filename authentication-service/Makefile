@@ -10,10 +10,13 @@ migratedown:
 sqlc:
 	sqlc generate
 
+sqlc2:
+	cd internal/postgres && sqlc generate
+
 protoc:
 	rm -f pb/*.go
 	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
     proto/*.proto
 
-.PHONY: createMigrate migrateup migratedown protoc
+.PHONY: createMigrate migrateup migratedown protoc sqlc2

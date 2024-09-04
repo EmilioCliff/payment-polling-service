@@ -166,7 +166,7 @@ func (app *App) callBack(ctx *gin.Context) {
 		return
 	}
 
-	transactionUUID, err := uuid.Parse(uri.ID)
+	_, err := uuid.Parse(uri.ID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error_message": "invalid url"})
 		return
@@ -178,7 +178,8 @@ func (app *App) callBack(ctx *gin.Context) {
 		return
 	}
 
+	// probably change the tranasction status after receiving the callback
+
 	log.Println("request: ", req)
-	log.Println("transaction id: ", transactionUUID.String())
 	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
 }

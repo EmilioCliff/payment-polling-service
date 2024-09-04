@@ -4,22 +4,20 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"time"
 
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/api"
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/utils"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
-	config, err := utils.LoadConfig(".")
+	config, err := pkg.LoadConfig(".")
 	if err != nil {
-		log.Printf("Failed to load config files: %s", err)
+		log.Printf("Failed to load config: %v", err)
 		return
 	}
 
-	// conn, err := amqp.Dial(config.RABBITMQ_URL)
 	conn, err := connectToRabit(config.RABBITMQ_URL)
 	if err != nil {
 		log.Printf("Failed to connect to RabbitMQ: %s", err)
@@ -34,16 +32,20 @@ func main() {
 	}
 	defer ch.Close()
 
-	server, err := api.NewServer(ch, config)
+	server, err := http.NewHttpServer(config, ch)
 	if err != nil {
-		log.Printf("Failed to start new server instance to db: %s", err)
+		log.Printf("Failed to create new httpServer instance: %s", err)
 		return
 	}
 
-	go server.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments", "gateway.register_user", "gateway.login_user"})
+	go server.RabbitClient.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments", "gateway.register_user", "gateway.login_user"})
 
-	log.Printf("Starting Gateway Server at port: %s", os.Getenv("PORT"))
-	server.Start(fmt.Sprintf("0.0.0.0:%s", os.Getenv("PORT")))
+	log.Printf("Starting server on port: %s", config.SERVER_ADDRESS)
+	err = server.Start(config.SERVER_ADDRESS)
+	if err != nil {
+		log.Printf("Failed to start gateway service: %s", err)
+		return
+	}
 }
 
 func connectToRabit(uri string) (*amqp.Connection, error) {

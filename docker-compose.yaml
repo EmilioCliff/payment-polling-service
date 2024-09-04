@@ -6,9 +6,7 @@ services:
     container_name: gatewayApp
     build:
       context: ./gateway-service
-      dockerfile: ./gateway-service.dockerfile
-    environment:
-      - PORT=5000
+      dockerfile: ./Dockerfile
     ports:
       - "8080:5000"
     deploy:

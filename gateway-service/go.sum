@@ -1,5 +1,3 @@
-github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821150947-5be83cbfacac h1:FEg8KmoT09o69tr99ouOffAG67KBUDnZEbaahatTNts=
-github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821150947-5be83cbfacac/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
 github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae h1:2gQQlDYpoqk2rL8HJ7/qaTjA83MfPG8kS/fZ2I5x/pY=
 github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
@@ -34,6 +32,8 @@ github.com/go-playground/validator/v10 v10.20.0 h1:K9ISHbSaI0lyB2eWMPJo+kOS/FBEx
 github.com/go-playground/validator/v10 v10.20.0/go.mod h1:dbuPbCMFw/DrkbEynArYaCwl3amGuJotoKCe95atGMM=
 github.com/goccy/go-json v0.10.2 h1:CrxCmQqYDkv1z7lO7Wbh2HN93uovUHgrECaO5ZrCXAU=
 github.com/goccy/go-json v0.10.2/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
+github.com/golang-jwt/jwt/v5 v5.2.1 h1:OuVbFODueb089Lh128TAcimifWaLhJwVflnrgM17wHk=
+github.com/golang-jwt/jwt/v5 v5.2.1/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
 github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=

@@ -1,8 +1,225 @@
+definitions:
+  services.InitiatePaymentRequest:
+    properties:
+      action:
+        type: string
+      amount:
+        type: integer
+      naration:
+        type: string
+      network_code:
+        type: string
+      phone_number:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - action
+    - amount
+    - naration
+    - network_code
+    - phone_number
+    - user_id
+    type: object
+  services.InitiatePaymentResponse:
+    properties:
+      action:
+        type: string
+      message:
+        type: string
+      payment_status:
+        type: boolean
+      status_code:
+        type: integer
+      transaction_id:
+        type: string
+    type: object
+  services.LoginUserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  services.LoginUserResponse:
+    properties:
+      access_token:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  services.PollingTransactionResponse:
+    properties:
+      action:
+        type: string
+      amount:
+        type: integer
+      message:
+        type: string
+      naration:
+        type: string
+      network_code:
+        type: string
+      payd_password_api_key:
+        type: string
+      payd_transaction_ref:
+        type: string
+      payd_username:
+        type: string
+      payd_username_api_key:
+        type: string
+      payment_status:
+        type: boolean
+      phone_number:
+        type: string
+      status_code:
+        type: integer
+      transaction_id:
+        type: string
+    type: object
+  services.RegisterUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        type: string
+      payd_password_api_key:
+        type: string
+      payd_username:
+        type: string
+      payd_username_api_key:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - payd_password_api_key
+    - payd_username
+    - payd_username_api_key
+    type: object
+  services.RegisterUserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+externalDocs:
+  url: https://swagger.io/resources/open-api/
 host: localhost:8080
 info:
   contact: {}
-  description: Payment Polling App is an online payment gateway service.
+  description: Payment Polling App is an online polling payment gateway service.
   title: Payment Polling App
   version: "1.0"
-paths: {}
+paths:
+  /initiate-payment:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a payment transaction.
+      parameters:
+      - description: payment details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.InitiatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.InitiatePaymentResponse'
+      summary: Initiate a payment
+      tags:
+      - payments
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user with credentials.
+      parameters:
+      - description: users credetials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.LoginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.LoginUserResponse'
+      summary: Login a user
+      tags:
+      - users
+  /poll-payment/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Polls the status of a payment transaction.
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.PollingTransactionResponse'
+      summary: Poll a payment
+      tags:
+      - payments
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user in the database.
+      parameters:
+      - description: users details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.RegisterUserResponse'
+      summary: Register a user
+      tags:
+      - users
+schemes:
+- http
+- https
 swagger: "2.0"

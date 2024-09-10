@@ -68,8 +68,6 @@ type PollingTransactionResponse struct {
 	Naration           string    `json:"naration"`
 	PaymentStatus      bool      `json:"payment_status"`
 	PaydUsername       string    `json:"payd_username"`
-	PaydUsernameApiKey string    `json:"payd_username_api_key"`
-	PaydPasswordApiKey string    `json:"payd_password_api_key"`
 	Message            string    `json:"message,omitempty"`
 	StatusCode         int       `json:"status_code,omitempty"`
 }

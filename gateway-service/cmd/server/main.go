@@ -14,9 +14,11 @@ import (
 
 // @title Payment Polling App
 // @version 1.0
-// @description Payment Polling App is an online payment gateway service.
+// @description Payment Polling App is an online polling payment gateway service.
 
 // @host localhost:8080
+// @schemes 				http https
+// @externalDocs.url https://swagger.io/resources/open-api/
 func main() {
 	config, err := pkg.LoadConfig(".")
 	if err != nil {

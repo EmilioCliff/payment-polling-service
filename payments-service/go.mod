@@ -11,6 +11,7 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/spf13/viper v1.19.0
+	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.65.0
 )
 

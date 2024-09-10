@@ -1,0 +1,8 @@
+host: localhost:8080
+info:
+  contact: {}
+  description: Payment Polling App is an online payment gateway service.
+  title: Payment Polling App
+  version: "1.0"
+paths: {}
+swagger: "2.0"

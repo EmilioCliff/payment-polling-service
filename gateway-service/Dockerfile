@@ -7,6 +7,7 @@ FROM alpine:3.20
 WORKDIR /app
 COPY --from=builder /app/gatewayApp .
 COPY --from=builder /app/.envs/.local/config.env .
+COPY --from=builder /app/docs /app/docs
 
 EXPOSE 5000
 CMD ["./gatewayApp"]

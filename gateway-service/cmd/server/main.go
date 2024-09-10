@@ -6,11 +6,17 @@ import (
 	"math"
 	"time"
 
+	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// @title Payment Polling App
+// @version 1.0
+// @description Payment Polling App is an online payment gateway service.
+
+// @host localhost:8080
 func main() {
 	config, err := pkg.LoadConfig(".")
 	if err != nil {

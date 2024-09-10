@@ -3,12 +3,15 @@ package http
 import (
 	"fmt"
 
+	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/gRPC"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type HttpServer struct {
@@ -46,6 +49,7 @@ func NewHttpServer(config pkg.Config, ch *amqp.Channel) (*HttpServer, error) {
 func (s *HttpServer) setRoutes() {
 	r := gin.Default()
 
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	r.POST("/register", s.handleRegisterUser)
 	r.POST("/login", s.handleLoginUser)                   // need authentication
 	r.POST("/payments/initiate", s.handleInitiatePayment) // need authentication

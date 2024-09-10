@@ -8,7 +8,7 @@ WORKDIR /app
 COPY --from=builder /app/authApp .
 COPY --from=builder  /app/.envs/.local/config.env .
 COPY --from=builder  /app/internal/postgres/migrations /app/migrations
-COPY --from=builder  /app/utils/* /app/utils/
+COPY --from=builder  /app/pkg/my_* /app/utils/
 
 EXPOSE 5000
 EXPOSE 5050

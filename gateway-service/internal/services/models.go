@@ -16,11 +16,11 @@ type RegisterUserRequest struct {
 }
 
 type RegisterUserResponse struct {
-	FullName  string    `json:"full_name"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	Message   string    `json:"message,omitempty"`
-	Status    int       `json:"status,omitempty"`
+	FullName   string    `json:"full_name"`
+	Email      string    `json:"email"`
+	CreatedAt  time.Time `json:"created_at"`
+	Message    string    `json:"message,omitempty"`
+	StatusCode int       `json:"status_code,omitempty"`
 }
 
 type LoginUserRequest struct {
@@ -34,7 +34,7 @@ type LoginUserResponse struct {
 	Email       string    `json:"email"`
 	CreatedAt   time.Time `json:"created_at"`
 	Message     string    `json:"message,omitempty"`
-	Status      int       `json:"status,omitempty"`
+	StatusCode  int       `json:"status_code,omitempty"`
 }
 
 type InitiatePaymentRequest struct {
@@ -51,7 +51,7 @@ type InitiatePaymentResponse struct {
 	PaymentStatus bool   `json:"payment_status"`
 	Action        string `json:"action"`
 	Message       string `json:"message,omitempty"`
-	Status        int    `json:"status,omitempty"`
+	StatusCode    int    `json:"status_code,omitempty"`
 }
 
 type PollingTransactionRequest struct {
@@ -71,5 +71,5 @@ type PollingTransactionResponse struct {
 	PaydUsernameApiKey string    `json:"payd_username_api_key"`
 	PaydPasswordApiKey string    `json:"payd_password_api_key"`
 	Message            string    `json:"message,omitempty"`
-	Status             int       `json:"status,omitempty"`
+	StatusCode         int       `json:"status_code,omitempty"`
 }

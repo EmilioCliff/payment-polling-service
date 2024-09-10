@@ -60,7 +60,7 @@ func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentReq
 			}
 
 			if paymentResp.Message != "" {
-				return paymentResp.Status, gin.H{"error": paymentResp.Message}
+				return paymentResp.StatusCode, gin.H{"error": paymentResp.Message}
 			}
 
 			return http.StatusOK, gin.H{"response": paymentResp}
@@ -125,7 +125,7 @@ func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransaction
 			}
 
 			if pollResp.Message != "" {
-				return pollResp.Status, gin.H{"error": pollResp.Message}
+				return pollResp.StatusCode, gin.H{"error": pollResp.Message}
 			}
 
 			return http.StatusOK, gin.H{"response": pollResp}

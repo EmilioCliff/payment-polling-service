@@ -60,7 +60,7 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 			}
 
 			if authResp.Message != "" {
-				return authResp.Status, gin.H{"error": authResp.Message}
+				return authResp.StatusCode, gin.H{"error": authResp.Message}
 			}
 
 			return http.StatusOK, gin.H{"response": authResp}
@@ -118,7 +118,7 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 			}
 
 			if loginResp.Message != "" {
-				return loginResp.Status, gin.H{"error": loginResp.Message}
+				return loginResp.StatusCode, gin.H{"error": loginResp.Message}
 			}
 
 			return http.StatusOK, gin.H{"response": loginResp}

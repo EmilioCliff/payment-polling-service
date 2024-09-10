@@ -22,7 +22,7 @@ services:
     container_name: paymentApp
     build: 
       context: ./payments-service
-      dockerfile: ./payments-service.dockerfile
+      dockerfile: ./Dockerfile
     ports:
       - "3030:3030"
     deploy:

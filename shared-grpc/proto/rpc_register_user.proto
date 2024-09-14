@@ -13,6 +13,7 @@ message RegisterUserRequest {
     string payd_username = 4;
     string payd_password_api_key = 5;
     string payd_username_api_key = 6;
+    string payd_account_id = 7;
 }
 
 message RegisterUserResponse {

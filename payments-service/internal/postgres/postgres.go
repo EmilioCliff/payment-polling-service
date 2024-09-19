@@ -14,16 +14,22 @@ import (
 )
 
 var (
-	storeInstance *Store
+	storeInstance Store
 	once          sync.Once
 )
 
-type Store struct {
-	Queries *generated.Queries
-	config  pkg.Config
+type Store interface {
+	generated.Querier
+	CreateTransactions(ctx context.Context, req InitiatePaymentRequest) (*InitiatePaymentResponse, *pkg.Error)
+	PollingTransaction(ctx context.Context, req PollingTransactionRequest) (*PollingTransactionResponse, *pkg.Error)
 }
 
-func GetStore() (*Store, error) {
+type SQLStore struct {
+	*generated.Queries
+	config pkg.Config
+}
+
+func GetStore() (Store, error) {
 	var err error
 	once.Do(func() {
 		storeInstance, err = NewStore()
@@ -31,8 +37,8 @@ func GetStore() (*Store, error) {
 	return storeInstance, err
 }
 
-func NewStore() (*Store, error) {
-	store := &Store{}
+func NewStore() (Store, error) {
+	store := &SQLStore{}
 
 	err := store.Start()
 	if err != nil {
@@ -42,7 +48,7 @@ func NewStore() (*Store, error) {
 	return store, nil
 }
 
-func (s *Store) Start() error {
+func (s *SQLStore) Start() error {
 	config, err := pkg.LoadConfig(".")
 	if err != nil {
 		return err
@@ -69,7 +75,7 @@ func (s *Store) Start() error {
 	return nil
 }
 
-func (s *Store) migrate() error {
+func (s *SQLStore) migrate() error {
 	if s.config.MIGRATION_PATH == "" {
 		return fmt.Errorf("migration dir is empty")
 	}

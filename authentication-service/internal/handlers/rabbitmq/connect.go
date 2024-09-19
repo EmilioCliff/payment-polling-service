@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/postgres"
+	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/repository"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -17,35 +17,22 @@ const (
 	AUTH_CONSUMER_NAME = "authentication_service"
 )
 
+
 type RabbitConn struct {
-	store  *postgres.Store
 	conn   *amqp.Connection
-	config pkg.Config
+	Config pkg.Config
+	Maker pkg.JWTMaker
+
+	UserRepository repository.UserRepository
 }
 
-func NewRabbitConn() (*RabbitConn, error) {
-	rabbit := &RabbitConn{}
-
-	config, err := pkg.LoadConfig(".")
-	if err != nil {
-		return nil, err
+func NewRabbitConn(config pkg.Config, tokenMaker pkg.JWTMaker) *RabbitConn {
+	rabbit := &RabbitConn{
+		Config: config,
+		Maker: tokenMaker,
 	}
 
-	store, err := postgres.NewStore()
-	if err != nil {
-		return nil, err
-	}
-
-	conn, err := rabbit.connectToRabbit(config.RABBITMQ_URL)
-	if err != nil {
-		return nil, err
-	}
-
-	rabbit.config = config
-	rabbit.store = store
-	rabbit.conn = conn
-
-	return rabbit, nil
+	return rabbit
 }
 
 type Payload struct {
@@ -53,17 +40,17 @@ type Payload struct {
 	Data any    `json:"data"`
 }
 
-func (r *RabbitConn) connectToRabbit(rabitURL string) (*amqp.Connection, error) {
+func (r *RabbitConn) ConnectToRabbit() error {
 	count := 0
-	rollOff := 1 * time.Second
+	rollOff := time.Second
 	var err error
 	var connection *amqp.Connection
 	for {
-		connection, err = amqp.Dial(rabitURL)
+		connection, err = amqp.Dial(r.Config.RABBITMQ_URL)
 		if err != nil {
 			log.Println("failed to connect to rabbitmq", err)
 			if count > 12 {
-				return nil, err
+				return err
 			}
 			count++
 			rollOff = time.Duration(math.Pow(float64(count), 2)) * time.Second
@@ -74,7 +61,9 @@ func (r *RabbitConn) connectToRabbit(rabitURL string) (*amqp.Connection, error) 
 		break
 	}
 
-	return connection, nil
+	r.conn = connection
+
+	return nil
 }
 
 func (r *RabbitConn) SetConsumer(topics []string) error {
@@ -85,7 +74,7 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		r.config.AUTH_QUEUE_NAME, // name
+		r.Config.AUTH_QUEUE_NAME, // name
 		false,                    // durable
 		false,                    // delete when unused
 		false,                    // exclusive
@@ -100,7 +89,7 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 		if err := ch.QueueBind(
 			q.Name,        // queue name
 			topic,         // routing key
-			r.config.EXCH, // exchange
+			r.Config.EXCH, // exchange
 			false,
 			nil,
 		); err != nil {
@@ -136,7 +125,7 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 				return
 			}
 
-			response := r.distributeTask(payload)
+			response := r.DistributeTask(payload)
 
 			log.Printf("Message acknowledged from auth service: %v", msg.DeliveryTag)
 			msg.Ack(false)
@@ -144,7 +133,7 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 			count := 0
 			for {
 				err = ch.PublishWithContext(ctx,
-					r.config.EXCH, // exchange
+					r.Config.EXCH, // exchange
 					msg.ReplyTo,   // routing key
 					false,         // mandatory
 					false,         // immediate
@@ -175,7 +164,7 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 	return nil
 }
 
-func (r *RabbitConn) distributeTask(payload Payload) []byte {
+func (r *RabbitConn) DistributeTask(payload Payload) []byte {
 	switch payload.Name {
 	case "register_user":
 		dataBytes, err := json.Marshal(payload.Data)
@@ -183,13 +172,13 @@ func (r *RabbitConn) distributeTask(payload Payload) []byte {
 			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err))
 		}
 
-		var registerUserPayload postgres.RegisterUserRequest
+		var registerUserPayload RegisterUserRequest
 		err = json.Unmarshal(dataBytes, &registerUserPayload)
 		if err != nil {
 			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err))
 		}
 
-		return r.handleRegisterUser(registerUserPayload)
+		return r.HandleRegisterUser(registerUserPayload)
 
 	case "login_user":
 		dataBytes, err := json.Marshal(payload.Data)
@@ -197,13 +186,13 @@ func (r *RabbitConn) distributeTask(payload Payload) []byte {
 			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err))
 		}
 
-		var loginUserPayload postgres.LoginUserRequest
+		var loginUserPayload LoginUserRequest
 		err = json.Unmarshal(dataBytes, &loginUserPayload)
 		if err != nil {
 			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err))
 		}
 
-		return r.handleLoginUser(loginUserPayload)
+		return r.HandleLoginUser(loginUserPayload)
 
 	default:
 		// log unknow message

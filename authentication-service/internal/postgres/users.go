@@ -2,56 +2,59 @@ package postgres
 
 import (
 	"context"
-	"time"
-    "database/sql"
+	"database/sql"
 
-    "github.com/lib/pq"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/postgres/generated"
+	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/repository"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
+	"github.com/lib/pq"
 )
 
-type RegisterUserRequest struct {
-    FullName       string `json:"full_name" binding:"required"`
-	PaydUsername   string `json:"payd_username" binding:"required"`
-	Email          string `json:"email" binding:"required"`
-	Password       string `json:"password" binding:"required"`
-	UsernameApiKey string `json:"payd_username_api_key" binding:"required"`
-	PasswordApiKey string `json:"payd_password_api_key" binding:"required"`
+var _ repository.UserRepository = (*UserRepository)(nil)
+
+type UserRepository struct {
+	db *Store
+	queries generated.Querier
 }
 
-type RegisterUserResponse struct {
-    FullName  string    `json:"full_name"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
+func NewUserService(db *Store) *UserRepository {
+	queries := generated.New(db.conn)
+
+	return &UserRepository{
+		db: db,
+		queries: queries,
+	}
 }
 
-func (s *Store) RegisterUser(ctx context.Context, req RegisterUserRequest) (*RegisterUserResponse, *pkg.Error) {
-    hashPassword, err := pkg.GenerateHashPassword(req.Password, s.config.HASH_COST)
+func (s *UserRepository) CreateUser(ctx context.Context, u repository.User) (*repository.User, error) {
+	err := u.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	hashPassword, err := pkg.GenerateHashPassword(u.Password, s.db.config.HASH_COST)
 	if err != nil {
         return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error hashing password: %s", err)
 	}
 
-	encryptPassApi, err := pkg.Encrypt(req.PasswordApiKey, []byte(s.config.ENCRYPTION_KEY))
+	encryptPassApi, err := pkg.Encrypt(u.PaydPasswordKey, []byte(s.db.config.ENCRYPTION_KEY))
 	if err != nil {
         return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error encrypting password api key: %s", err)
 	}
 
-	encryptUserApi, err := pkg.Encrypt(req.UsernameApiKey, []byte(s.config.ENCRYPTION_KEY))
+	encryptUserApi, err := pkg.Encrypt(u.PaydUsernameKey, []byte(s.db.config.ENCRYPTION_KEY))
 	if err != nil {
         return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error encrypting user api key: %s", err)
 	}
 
-	if ctx.Err() == context.Canceled || ctx.Err() == context.DeadlineExceeded {
-        return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating user: %s", err)
-	}
-
-	user, err := s.Queries.CreateUser(ctx, generated.CreateUserParams{
-		FullName:        req.FullName,
-		Email:           req.Email,
+	user, err := s.queries.CreateUser(ctx, generated.CreateUserParams{
+		FullName:        u.FullName,
+		Email:           u.Email,
 		Password:        hashPassword,
-		PaydUsername:    req.PaydUsername,
+		PaydUsername:    u.PaydUsername,
 		PaydUsernameKey: encryptUserApi,
 		PaydPasswordKey: encryptPassApi,
+		PaydAccountID: u.PaydAccountID,
 	})
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
@@ -64,51 +67,53 @@ func (s *Store) RegisterUser(ctx context.Context, req RegisterUserRequest) (*Reg
         return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating user: %s", err)
 	}
 
-	return &RegisterUserResponse{
-		FullName:  user.FullName,
-		Email:     user.Email,
+	return &repository.User{
+		FullName: user.FullName,
+		Email: user.Email,
 		CreatedAt: user.CreatedAt,
 	}, nil
 }
 
-type LoginUserRequest struct {
-    Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type LoginUserResponse struct {
-    AccessToken  string    `json:"access_token"`
-	ExpirationAt time.Time `json:"expiration_at"`
-	FullName     string    `json:"full_name"`
-	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"created_at"`
-}
-
-func (s *Store) LoginUser(ctx context.Context, req LoginUserRequest) (*LoginUserResponse, *pkg.Error) {
-    user, err := s.Queries.GetUserByEmail(ctx, req.Email)
+func (s *UserRepository) GetUser(ctx context.Context, email string) (*repository.User, error) {
+	user, err := s.queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-            pkg.Errorf(pkg.INTERNAL_ERROR, "error creating access token: %s", err)
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user not found: %s", err)
 		}
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error getting user by email: %s", err)
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error geting user: %s", err)
 	}
 
-	err = pkg.ComparePasswordAndHash(user.Password, req.Password)
+	return &repository.User{
+		ID: user.ID,
+		FullName: user.FullName,
+		Email: user.Email,
+		Password: user.Password,
+		PaydUsername: user.PaydUsername,
+		PaydAccountID: user.PaydAccountID,
+		PaydUsernameKey: user.PaydUsernameKey,
+		PaydPasswordKey: user.PaydPasswordKey,
+		CreatedAt: user.CreatedAt,
+	}, nil
+}
+
+func (s *UserRepository) GetUserByID(ctx context.Context, id int64) (*repository.User, error) {
+	user, err := s.queries.GetUser(ctx, id)
 	if err != nil {
-		return nil, pkg.Errorf(pkg.AUTHENTICATION_ERROR, "invalid credentials: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user not found: %s", err)
+		}
+		return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "error geting user: %s", err)
 	}
 
-	accessToken, err := s.maker.CreateToken(user.Email, s.config.TOKEN_DURATION)
-	if err != nil {
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating access token: %s", err)
-	}
-
-	return &LoginUserResponse{
-		AccessToken:  accessToken,
-		ExpirationAt: time.Now().Add(s.config.TOKEN_DURATION),
-		FullName:     user.FullName,
-		Email:        user.Email,
-		CreatedAt:    user.CreatedAt,
+	return &repository.User{
+		ID: user.ID,
+		FullName: user.FullName,
+		Email: user.Email,
+		Password: user.Password,
+		PaydUsername: user.PaydUsername,
+		PaydAccountID: user.PaydAccountID,
+		PaydUsernameKey: user.PaydUsernameKey,
+		PaydPasswordKey: user.PaydPasswordKey,
+		CreatedAt: user.CreatedAt,
 	}, nil
 }

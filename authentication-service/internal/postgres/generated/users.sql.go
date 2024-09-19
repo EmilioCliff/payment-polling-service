@@ -11,11 +11,11 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-    full_name, payd_username, email, password, payd_username_key, payd_password_key
+    full_name, payd_username, email, password, payd_username_key, payd_password_key, payd_account_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id, payd_username, full_name, email, password, payd_username_key, payd_password_key, access_token, created_at
+RETURNING id, full_name, email, password, payd_username, payd_account_id, payd_username_key, payd_password_key, created_at
 `
 
 type CreateUserParams struct {
@@ -25,6 +25,7 @@ type CreateUserParams struct {
 	Password        string `json:"password"`
 	PaydUsernameKey string `json:"payd_username_key"`
 	PaydPasswordKey string `json:"payd_password_key"`
+	PaydAccountID   string `json:"payd_account_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -35,24 +36,25 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Password,
 		arg.PaydUsernameKey,
 		arg.PaydPasswordKey,
+		arg.PaydAccountID,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.PaydUsername,
 		&i.FullName,
 		&i.Email,
 		&i.Password,
+		&i.PaydUsername,
+		&i.PaydAccountID,
 		&i.PaydUsernameKey,
 		&i.PaydPasswordKey,
-		&i.AccessToken,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, payd_username, full_name, email, password, payd_username_key, payd_password_key, access_token, created_at FROM users
+SELECT id, full_name, email, password, payd_username, payd_account_id, payd_username_key, payd_password_key, created_at FROM users
 WHERE id = $1
 LIMIT 1
 `
@@ -62,20 +64,20 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.PaydUsername,
 		&i.FullName,
 		&i.Email,
 		&i.Password,
+		&i.PaydUsername,
+		&i.PaydAccountID,
 		&i.PaydUsernameKey,
 		&i.PaydPasswordKey,
-		&i.AccessToken,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, payd_username, full_name, email, password, payd_username_key, payd_password_key, access_token, created_at FROM users
+SELECT id, full_name, email, password, payd_username, payd_account_id, payd_username_key, payd_password_key, created_at FROM users
 WHERE email = $1
 LIMIT 1
 `
@@ -85,13 +87,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.PaydUsername,
 		&i.FullName,
 		&i.Email,
 		&i.Password,
+		&i.PaydUsername,
+		&i.PaydAccountID,
 		&i.PaydUsernameKey,
 		&i.PaydPasswordKey,
-		&i.AccessToken,
 		&i.CreatedAt,
 	)
 	return i, err

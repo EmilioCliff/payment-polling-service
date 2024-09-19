@@ -8,14 +8,14 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
 )
 
-type errorResponse struct {
+type ErrorResponse struct {
 	StatusCode int    `json:"status_code"`
 	Message    string `json:"message"`
 }
 
 func (r *RabbitConn) errorRabbitMQResponse(pkgErr *pkg.Error) []byte {
-	errorRsp := errorResponse{
-		StatusCode: r.convertPkgError(pkgErr),
+	errorRsp := ErrorResponse{
+		StatusCode: r.ConvertPkgError(pkgErr),
 		Message:    pkgErr.Message,
 	}
 
@@ -28,7 +28,7 @@ func (r *RabbitConn) errorRabbitMQResponse(pkgErr *pkg.Error) []byte {
 	return jsonResponse
 }
 
-func (r RabbitConn) convertPkgError(err *pkg.Error) int {
+func (r RabbitConn) ConvertPkgError(err *pkg.Error) int {
 	switch err.Code {
 	case pkg.ALREADY_EXISTS_ERROR:
 		return http.StatusConflict

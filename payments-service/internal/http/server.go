@@ -10,7 +10,7 @@ import (
 
 type HttpServer struct {
 	router *gin.Engine
-	store  *postgres.Store
+	store  postgres.Store
 }
 
 func NewHttpServer() (*HttpServer, error) {

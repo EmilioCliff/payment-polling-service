@@ -17,7 +17,7 @@ type TaskProcessor interface {
 
 type RedisTaskProcessor struct {
 	server *asynq.Server
-	store  *postgres.Store
+	store  postgres.Store
 }
 
 func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt) (TaskProcessor, error) {

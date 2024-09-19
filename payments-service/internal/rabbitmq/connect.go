@@ -27,7 +27,7 @@ type RabbitConn struct {
 	conn        *amqp.Connection
 	config      pkg.Config
 	client      pb.AuthenticationServiceClient
-	store       *postgres.Store
+	store       postgres.Store
 }
 
 func NewRabbitConn() (*RabbitConn, error) {

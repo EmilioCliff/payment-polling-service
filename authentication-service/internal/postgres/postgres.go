@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/postgres/generated"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -13,33 +12,19 @@ import (
 )
 
 type Store struct {
-	Queries *generated.Queries
 	config  pkg.Config
-
+	conn *pgxpool.Pool
 	maker pkg.JWTMaker
-
-	HTTP_ADDR string
-	GRPC_ADDR string
 }
 
-func NewStore() (*Store, error) {
-	store := &Store{}
-
-	err := store.Start()
-	if err != nil {
-		return nil, fmt.Errorf("error starting store: %v", err)
+func NewStore(config pkg.Config, maker pkg.JWTMaker) *Store {
+	return &Store{
+		config: config,
+		maker: maker,
 	}
-
-	return store, nil
 }
 
 func (s *Store) Start() error {
-	config, err := pkg.LoadConfig(".")
-	if err != nil {
-		return err
-	}
-	s.config = config
-
 	if s.config.DB_URL == "" {
 		return fmt.Errorf("dsn is empty")
 	}
@@ -49,25 +34,14 @@ func (s *Store) Start() error {
 		return fmt.Errorf("Failed to connect to db: %s", err)
 	}
 
-	queries := generated.New(postgresConn)
-	s.Queries = queries
-
-	err = s.migrate()
+	err = postgresConn.Ping(context.Background())
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to connect to db")
 	}
 
-	s.HTTP_ADDR = config.HTTP_PORT
-	s.GRPC_ADDR = config.GRPC_PORT
+	s.conn = postgresConn
 
-	maker, err := pkg.NewJWTMaker(config.PRIVATE_KEY_PATH, config.PUBLIC_KEY_PATH)
-	if err != nil {
-		return fmt.Errorf("Failed to create token maker: %s", err)
-	}
-
-	s.maker = *maker
-
-	return nil
+	return s.migrate()
 }
 
 func (s *Store) migrate() error {

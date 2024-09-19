@@ -106,7 +106,7 @@ func (processor *RedisTaskProcessor) ProcessWithdrawalRequestTask(ctx context.Co
 	// 	"status": "SUCCESS"
 	// }
 
-	_, pkgErr := processor.store.CreateTransaction(ctx, postgres.InitiatePaymentRequest{
+	_, pkgErr := processor.store.CreateTransactions(ctx, postgres.InitiatePaymentRequest{
 		TransactionID:      taskPayload.TransactionID,
 		PaydTransactionRef: transactionReference,
 		UserID:             taskPayload.UserID,

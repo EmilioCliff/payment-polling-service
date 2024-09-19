@@ -6,18 +6,16 @@ package generated
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
-	ID              int64       `json:"id"`
-	PaydUsername    string      `json:"payd_username"`
-	FullName        string      `json:"full_name"`
-	Email           string      `json:"email"`
-	Password        string      `json:"password"`
-	PaydUsernameKey string      `json:"payd_username_key"`
-	PaydPasswordKey string      `json:"payd_password_key"`
-	AccessToken     pgtype.Text `json:"access_token"`
-	CreatedAt       time.Time   `json:"created_at"`
+	ID              int64     `json:"id"`
+	FullName        string    `json:"full_name"`
+	Email           string    `json:"email"`
+	Password        string    `json:"password"`
+	PaydUsername    string    `json:"payd_username"`
+	PaydAccountID   string    `json:"payd_account_id"`
+	PaydUsernameKey string    `json:"payd_username_key"`
+	PaydPasswordKey string    `json:"payd_password_key"`
+	CreatedAt       time.Time `json:"created_at"`
 }

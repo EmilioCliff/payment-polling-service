@@ -25,7 +25,7 @@ func (s *HttpServer) handleRegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, rsp := s.RegisterUserViaHttp(req)
+	statusCode, rsp := s.GrpcClient.RegisterUserViagRPC(req)
 	ctx.JSON(statusCode, rsp)
 }
 
@@ -45,7 +45,8 @@ func (s *HttpServer) handleLoginUser(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, rsp := s.GrpcClient.LoginUserViagRPC(req)
+	// statusCode, rsp := s.GrpcClient.LoginUserViagRPC(req)
+	statusCode, rsp := s.RabbitClient.LoginUserViaRabbit(req)
 	ctx.JSON(statusCode, rsp)
 }
 

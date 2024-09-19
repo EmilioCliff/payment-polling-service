@@ -27,7 +27,7 @@ type InitiatePaymentResponse struct {
 	Amount        int32     `json:"amount"`
 }
 
-func (store *Store) CreateTransaction(ctx context.Context, req InitiatePaymentRequest) (*InitiatePaymentResponse, *pkg.Error) {
+func (store *SQLStore) CreateTransactions(ctx context.Context, req InitiatePaymentRequest) (*InitiatePaymentResponse, *pkg.Error) {
 	// validate the request
 
 	transaction, err := store.Queries.CreateTransaction(ctx, generated.CreateTransactionParams{
@@ -67,7 +67,7 @@ type PollingTransactionResponse struct {
 	PaymentStatus      bool      `json:"payment_status"`
 }
 
-func (store *Store) PollingTransaction(ctx context.Context, req PollingTransactionRequest) (*PollingTransactionResponse, *pkg.Error) {
+func (store *SQLStore) PollingTransaction(ctx context.Context, req PollingTransactionRequest) (*PollingTransactionResponse, *pkg.Error) {
 	transactionUUID, err := uuid.Parse(req.TransactionId)
 	if err != nil {
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "invalid uuid: %v", err)

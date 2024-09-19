@@ -105,7 +105,7 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 
 	transactionReference := responseData["merchantRequestID"].(string)
 
-	_, pkgErr := processor.store.CreateTransaction(ctx, postgres.InitiatePaymentRequest{
+	_, pkgErr := processor.store.CreateTransactions(ctx, postgres.InitiatePaymentRequest{
 		TransactionID:      taskPayload.TransactionID,
 		PaydTransactionRef: transactionReference,
 		UserID:             taskPayload.UserID,

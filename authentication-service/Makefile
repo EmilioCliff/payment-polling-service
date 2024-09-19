@@ -8,10 +8,7 @@ migratedown:
 	migrate -path db/migrations -database "$(DB_URL)" -verbose down
 
 sqlc:
-	sqlc generate
-
-sqlc2:
-	cd internal/postgres && sqlc generate
+	cd .envs/configs && sqlc generate
 
 protoc:
 	rm -f pb/*.go
@@ -35,4 +32,4 @@ race-test:
 lint:
 	golangci-lint run
 
-.PHONY: createMigrate migrateup migratedown protoc sqlc2 mock test race-test lint
+.PHONY: createMigrate migrateup migratedown protoc sqlc mock test race-test lint

@@ -7,7 +7,9 @@ import (
 	"time"
 
 	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/gRPC"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -17,8 +19,6 @@ import (
 // @description Payment Polling App is an online polling payment gateway service.
 
 // @host localhost:8080
-// @schemes 				http https
-// @externalDocs.url https://swagger.io/resources/open-api/
 func main() {
 	config, err := pkg.LoadConfig(".")
 	if err != nil {
@@ -46,7 +46,22 @@ func main() {
 		return
 	}
 
-	go server.RabbitClient.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments", "gateway.register_user", "gateway.login_user"})
+	rpcClient := gRPC.NewGrpcClient()
+	err = rpcClient.Start(config.AUTH_GRPC_PORT)
+	if err != nil {
+		log.Fatalf("failed to get grpc client: %v", err)
+		return
+	}
+
+	rabbitHandler := rabbitmq.NewRabbitHandler(ch, config)
+
+	httpService := http.NewHTTPService(config)
+
+	server.GRPCService = rpcClient
+	server.RabbitService = rabbitHandler
+	server.HTTPService = httpService
+
+	go server.RabbitService.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments", "gateway.register_user", "gateway.login_user"})
 
 	log.Printf("Starting server on port: %s", config.SERVER_ADDRESS)
 	err = server.Start(config.SERVER_ADDRESS)

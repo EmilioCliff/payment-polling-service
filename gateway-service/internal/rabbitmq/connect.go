@@ -9,6 +9,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+var _ services.RabbitInterface = (*RabbitHandler)(nil)
+
 type RabbitHandler struct {
 	Channel *amqp.Channel
 	RspMap  *responseMap
@@ -20,14 +22,12 @@ type responseMap struct {
 	data map[string]chan amqp.Delivery
 }
 
-var _ services.RabbitInterface = (*RabbitHandler)(nil)
-
-func NewRabbitHandler(channel *amqp.Channel, config pkg.Config) (*RabbitHandler, error) {
+func NewRabbitHandler(channel *amqp.Channel, config pkg.Config) *RabbitHandler {
 	return &RabbitHandler{
 		RspMap:  NewResponseMap(),
 		config:  config,
 		Channel: channel,
-	}, nil
+	}
 }
 
 func NewResponseMap() *responseMap {

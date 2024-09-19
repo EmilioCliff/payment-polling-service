@@ -12,4 +12,6 @@ type RabbitInterface interface {
 	LoginUserViaRabbit(LoginUserRequest) (int, gin.H)
 	InitiatePaymentViaRabbit(InitiatePaymentRequest) (int, gin.H)
 	PollTransactionViaRabbit(PollingTransactionRequest) (int, gin.H)
+
+	SetConsumer(topics []string) error
 }

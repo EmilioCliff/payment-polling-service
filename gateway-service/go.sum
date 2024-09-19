@@ -1,5 +1,7 @@
 github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae h1:2gQQlDYpoqk2rL8HJ7/qaTjA83MfPG8kS/fZ2I5x/pY=
 github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240821164106-3d5fd42acaae/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
+github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240919052531-57c547aecbbf h1:UxMZYjmkyjadHtTqKkhYajREv7DQe9mSufandkHQNpU=
+github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240919052531-57c547aecbbf/go.mod h1:AjQ7p8vjOpkmN3bFQV9z4ZFQn1jDaWcq8qwDkXdpv08=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=

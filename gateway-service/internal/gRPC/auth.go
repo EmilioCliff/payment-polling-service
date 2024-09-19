@@ -23,6 +23,7 @@ func (g *GrpcClient) RegisterUserViagRPC(req services.RegisterUserRequest) (int,
 		PaydUsername:       req.PaydUsername,
 		PaydPasswordApiKey: req.PasswordApiKey,
 		PaydUsernameApiKey: req.UsernameApiKey,
+		PaydAccountId: req.PaydAccountID,
 	})
 	if err != nil {
 		st, ok := status.FromError(err)

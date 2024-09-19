@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -12,13 +13,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *HttpServer) RegisterUserViaHttp(req services.RegisterUserRequest) (int, gin.H) {
+var _ services.HttpInterface = (*HTTPService)(nil)
+
+type HTTPService struct {
+	registerPath string
+	loginPath string
+	config pkg.Config
+}
+
+func NewHTTPService(config pkg.Config) *HTTPService {return &HTTPService{
+	config: config,
+	registerPath: "auth/register",
+	loginPath: "auth/login",
+}}
+
+func (s *HTTPService) RegisterUserViaHttp(req services.RegisterUserRequest) (int, gin.H) {
 	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't marshal request data")
 	}
 
-	request, err := http.NewRequest("POST", "http://authApp:5000/auth/register", bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("POST", fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.registerPath), bytes.NewBuffer(jsonData))
 	if err != nil {
 		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't create request to authApp")
 	}
@@ -49,13 +64,13 @@ func (s *HttpServer) RegisterUserViaHttp(req services.RegisterUserRequest) (int,
 	return http.StatusOK, gin.H{"response": authServiceResponse}
 }
 
-func (s *HttpServer) LoginUserViaHttp(req services.LoginUserRequest) (int, gin.H) {
+func (s *HTTPService) LoginUserViaHttp(req services.LoginUserRequest) (int, gin.H) {
 	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't marshal request data")
 	}
 
-	request, err := http.NewRequest("POST", "http://authApp:5000/auth/login", bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("POST", fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.loginPath), bytes.NewBuffer(jsonData))
 	if err != nil {
 		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't create request to authApp")
 	}

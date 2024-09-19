@@ -11,21 +11,24 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var _ services.GrpcInterface = (*GrpcClient)(nil)
+
 type GrpcClient struct {
 	authgRPClient pb.AuthenticationServiceClient
 }
 
-var _ services.GrpcInterface = (*GrpcClient)(nil)
+func NewGrpcClient() *GrpcClient {
+	return &GrpcClient{}
+}
 
-func NewGrpcClient() (*GrpcClient, error) {
-	gRPCconn, err := grpc.NewClient("authApp:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (g *GrpcClient) Start(grpcPort string) error {
+	gRPCconn, err := grpc.NewClient(grpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &GrpcClient{
-		authgRPClient: pb.NewAuthenticationServiceClient(gRPCconn),
-	}, nil
+	g.authgRPClient = pb.NewAuthenticationServiceClient(gRPCconn)
+	return nil
 }
 
 func (g *GrpcClient) grpcErrorResponse(code codes.Code, msg string) (int, gin.H) {

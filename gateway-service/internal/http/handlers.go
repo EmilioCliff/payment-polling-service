@@ -25,7 +25,7 @@ func (s *HttpServer) handleRegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, rsp := s.GrpcClient.RegisterUserViagRPC(req)
+	statusCode, rsp := s.GRPCService.RegisterUserViagRPC(req)
 	ctx.JSON(statusCode, rsp)
 }
 
@@ -46,7 +46,7 @@ func (s *HttpServer) handleLoginUser(ctx *gin.Context) {
 	}
 
 	// statusCode, rsp := s.GrpcClient.LoginUserViagRPC(req)
-	statusCode, rsp := s.RabbitClient.LoginUserViaRabbit(req)
+	statusCode, rsp := s.HTTPService.LoginUserViaHttp(req)
 	ctx.JSON(statusCode, rsp)
 }
 
@@ -66,7 +66,7 @@ func (s *HttpServer) handleInitiatePayment(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, rsp := s.RabbitClient.InitiatePaymentViaRabbit(req)
+	statusCode, rsp := s.RabbitService.InitiatePaymentViaRabbit(req)
 	ctx.JSON(statusCode, rsp)
 }
 
@@ -86,6 +86,6 @@ func (s *HttpServer) handlePaymentPolling(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, rsp := s.RabbitClient.PollTransactionViaRabbit(req)
+	statusCode, rsp := s.RabbitService.PollTransactionViaRabbit(req)
 	ctx.JSON(statusCode, rsp)
 }

@@ -8,6 +8,8 @@ type Config struct {
 	QUEUE_NAME           string `mapstructure:"QUEUE_NAME"`
 	EXCH                 string `mapstructure:"EXCH"`
 	EXCLUSIVE_QUEUE_NAME string `mapstructure:"EXCLUSIVE_QUEUE_NAME"`
+	AUTH_GRPC_PORT string `mapstructure:"AUTH_GRPC_PORT"`
+	AUTH_HTTP_PORT string `mapstructure:"AUTH_HTTP_PORT"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

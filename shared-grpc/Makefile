@@ -4,4 +4,7 @@ protoc:
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
     proto/*.proto
 
-.PHONY: protoc
+mock:
+	mockgen -package mock -destination ./mock/mock.go github.com/EmilioCliff/payment-polling-service/shared-grpc/pb AuthenticationServiceClient
+
+.PHONY: protoc mock

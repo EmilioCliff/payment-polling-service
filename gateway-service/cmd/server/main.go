@@ -40,11 +40,12 @@ func main() {
 	}
 	defer ch.Close()
 
-	server, err := http.NewHttpServer(config, ch)
+	maker, err := pkg.NewJWTMaker(config.PRIVATE_KEY_PATH, config.PUBLIC_KEY_PATH)
 	if err != nil {
-		log.Printf("Failed to create new httpServer instance: %s", err)
-		return
+		log.Fatalf("Failed to create token maker: %v", err)
 	}
+
+	server := http.NewHttpServer(*maker)
 
 	rpcClient := gRPC.NewGrpcClient()
 	err = rpcClient.Start(config.AUTH_GRPC_PORT)

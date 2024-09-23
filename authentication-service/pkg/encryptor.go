@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"io"
 )
 
@@ -16,6 +17,7 @@ func Encrypt(plaintext string, key []byte) (string, error) {
 
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
+
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return "", err
 	}
@@ -38,7 +40,7 @@ func Decrypt(ciphertext string, key []byte) (string, error) {
 	}
 
 	if len(ciphertextBytes) < aes.BlockSize {
-		return "", err
+		return "", errors.New("invalid ciphertext")
 	}
 
 	iv := ciphertextBytes[:aes.BlockSize]

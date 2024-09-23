@@ -10,13 +10,13 @@ import (
 )
 
 type RegisterUserRequest struct {
-	FullName  string    `json:"full_name" binding:"required"`
-	Email     string    `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	PaydUsername string `json:"payd_username" binding:"required"`
-	PaydAccountID   string    `json:"payd_account_id" binding:"required"`
-	PaydUsernameKey string    `json:"payd_username_key" binding:"required"`
-	PaydPasswordKey string    `json:"payd_password_key" binding:"required"`
+	FullName        string `binding:"required" json:"full_name"`
+	Email           string `binding:"required" json:"email"`
+	Password        string `binding:"required" json:"password"`
+	PaydUsername    string `binding:"required" json:"payd_username"`
+	PaydAccountID   string `binding:"required" json:"payd_account_id"`
+	PaydUsernameKey string `binding:"required" json:"payd_username_key"`
+	PaydPasswordKey string `binding:"required" json:"payd_password_key"`
 }
 
 type RegisterUserResponse struct {
@@ -26,43 +26,47 @@ type RegisterUserResponse struct {
 }
 
 func (r *RabbitConn) HandleRegisterUser(req RegisterUserRequest) []byte {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 42*time.Second)
 	defer cancel()
 
 	user, err := r.UserRepository.CreateUser(ctx, repository.User{
-		FullName: req.FullName,
-		Email: req.Email,
-		Password: req.Password,
-		PaydUsername: req.PaydUsername,
-		PaydAccountID: req.PaydAccountID,
+		FullName:        req.FullName,
+		Email:           req.Email,
+		Password:        req.Password,
+		PaydUsername:    req.PaydUsername,
+		PaydAccountID:   req.PaydAccountID,
 		PaydUsernameKey: req.PaydUsernameKey,
 		PaydPasswordKey: req.PaydPasswordKey,
 	})
 	if err != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(pkg.ErrorCode(err), "failed to create user: %v", pkg.ErrorMessage(err)))
+		return errorRabbitMQResponse(
+			pkg.Errorf(pkg.ErrorCode(err), "failed to create user: %v", pkg.ErrorMessage(err)),
+		)
 	}
 
 	rsp := RegisterUserResponse{
-		FullName: user.FullName,
-		Email: user.Email,
+		FullName:  user.FullName,
+		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
 	}
 
 	rspByte, rspErr := json.Marshal(rsp)
 	if rspErr != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal response: %v", rspErr))
+		return errorRabbitMQResponse(
+			pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal response: %v", rspErr),
+		)
 	}
 
 	return rspByte
 }
 
 type LoginUserRequest struct {
-    Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email    string `binding:"required" json:"email"`
+	Password string `binding:"required" json:"password"`
 }
 
 type LoginUserResponse struct {
-    AccessToken  string    `json:"access_token"`
+	AccessToken  string    `json:"access_token"`
 	ExpirationAt time.Time `json:"expiration_at"`
 	FullName     string    `json:"full_name"`
 	Email        string    `json:"email"`
@@ -70,35 +74,43 @@ type LoginUserResponse struct {
 }
 
 func (r *RabbitConn) HandleLoginUser(req LoginUserRequest) []byte {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 42*time.Second)
 	defer cancel()
 
 	user, err := r.UserRepository.GetUser(ctx, req.Email)
 	if err != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(pkg.ErrorCode(err), "failed to login user: %v", pkg.ErrorMessage(err)))
+		return errorRabbitMQResponse(
+			pkg.Errorf(pkg.ErrorCode(err), "failed to login user: %v", pkg.ErrorMessage(err)),
+		)
 	}
 
 	err = pkg.ComparePasswordAndHash(user.Password, req.Password)
 	if err != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(pkg.AUTHENTICATION_ERROR, "Error comparing passwords: %v", err))
+		return errorRabbitMQResponse(
+			pkg.Errorf(pkg.AUTHENTICATION_ERROR, "Error comparing passwords: %v", err),
+		)
 	}
 
 	accessToken, err := r.Maker.CreateToken(user.Email, r.Config.TOKEN_DURATION)
 	if err != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(pkg.AUTHENTICATION_ERROR, "Error creating token: %v", err))
+		return errorRabbitMQResponse(
+			pkg.Errorf(pkg.AUTHENTICATION_ERROR, "Error creating token: %v", err),
+		)
 	}
 
 	rsp := LoginUserResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
 		ExpirationAt: time.Now().Add(r.Config.TOKEN_DURATION),
-		FullName: user.FullName,
-		Email: user.Email,
-		CreatedAt: user.CreatedAt,
+		FullName:     user.FullName,
+		Email:        user.Email,
+		CreatedAt:    user.CreatedAt,
 	}
 
 	rspByte, err := json.Marshal(rsp)
 	if err != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal response: %v", err))
+		return errorRabbitMQResponse(
+			pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal response: %v", err),
+		)
 	}
 
 	return rspByte

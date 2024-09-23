@@ -4,15 +4,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/handlers/rabbitmq"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
 )
 
-func TestGRPCServer_convertPkgError (t *testing.T) {
-	r := NewTestRabbitConn()
-
-	tests := []struct{
+func TestGRPCServer_convertPkgError(t *testing.T) {
+	tests := []struct {
 		name string
-		err *pkg.Error
+		err  *pkg.Error
 		want int
 	}{
 		{
@@ -68,7 +67,7 @@ func TestGRPCServer_convertPkgError (t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := r.rabbitConn.ConvertPkgError(tc.err)
+			got := rabbitmq.ConvertPkgError(tc.err)
 			if got != tc.want {
 				t.Errorf("convertPkgError() = %v, want %v", got, tc.want)
 			}

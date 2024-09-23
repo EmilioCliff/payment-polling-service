@@ -1,4 +1,4 @@
-package gRPC
+package Grpc
 
 import (
 	"context"
@@ -12,23 +12,25 @@ import (
 )
 
 type TestGRPCServer struct {
-	server *GRPCServer
+	server         *GRPCServer
 	UserRepository mock.MockUsersRepositry
 }
 
 func NewTestGRPCServer() *TestGRPCServer {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-    if err != nil {
-        panic(err)
-    }
+	bits := 2048
 
-    publicKey := &privateKey.PublicKey
+	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
+	if err != nil {
+		panic(err)
+	}
+
+	publicKey := &privateKey.PublicKey
 
 	s := &TestGRPCServer{
 		server: NewGRPCServer(pkg.Config{
 			TOKEN_DURATION: time.Second,
 		}, pkg.JWTMaker{
-			PublicKey: publicKey,
+			PublicKey:  publicKey,
 			PrivateKey: privateKey,
 		}),
 	}
@@ -39,19 +41,19 @@ func NewTestGRPCServer() *TestGRPCServer {
 }
 
 func TestGRPCServer_Start(t *testing.T) {
-	tests := []struct{
-		name string
-		port string
+	tests := []struct {
+		name    string
+		port    string
 		wantErr bool
 	}{
 		{
-			name: "Valid Port",
-			port: "0.0.0.0:5050",
+			name:    "Valid Port",
+			port:    "0.0.0.0:5050",
 			wantErr: false,
 		},
 		{
-			name: "Invalid Port",
-			port: "INVALID_PORT",
+			name:    "Invalid Port",
+			port:    "INVALID_PORT",
 			wantErr: true,
 		},
 	}
@@ -64,9 +66,10 @@ func TestGRPCServer_Start(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
-			go func() {
-				errCh <- s.server.Start(tc.port)
-			}()
+			go func(port string) {
+				errCh <- s.server.Start(port)
+			}(tc.port)
+
 			select {
 			case err := <-errCh:
 				if (err != nil) != tc.wantErr {
@@ -74,7 +77,7 @@ func TestGRPCServer_Start(t *testing.T) {
 				}
 			case <-ctx.Done():
 				if tc.wantErr {
-					t.Errorf("GRPCServer.Run() expected error for port %v, but got none", tc.port)
+					t.Errorf("GRPCServer.Run() expected error for port %s, but got none", tc.port)
 				}
 			}
 

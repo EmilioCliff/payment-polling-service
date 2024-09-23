@@ -13,16 +13,21 @@ import (
 
 var _ services.GrpcInterface = (*GrpcClient)(nil)
 
+type GrpcDialFunc func(target string, opts ...grpc.DialOption) (*grpc.ClientConn, error)
+
 type GrpcClient struct {
 	authgRPClient pb.AuthenticationServiceClient
+	dialFunc      GrpcDialFunc
 }
 
 func NewGrpcClient() *GrpcClient {
-	return &GrpcClient{}
+	return &GrpcClient{
+		dialFunc: grpc.NewClient,
+	}
 }
 
 func (g *GrpcClient) Start(grpcPort string) error {
-	gRPCconn, err := grpc.NewClient(grpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	gRPCconn, err := g.dialFunc(grpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}

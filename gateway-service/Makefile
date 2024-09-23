@@ -1,7 +1,14 @@
-protoc:
-	rm -f pb/*.go
-	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
-    --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
-    proto/*.proto
+test:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out 
+	go tool cover -html=coverage.out -o coverage.html
 
-.PHONY: protoc
+race-test:
+	go test -race -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
+lint:
+	golangci-lint run
+
+.PHONY: test race-test lint

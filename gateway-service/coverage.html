@@ -1,0 +1,1667 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>server: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/EmilioCliff/payment-polling-app/gateway-service/cmd/server/main.go (0.0%)</option>
+				
+				<option value="file1">github.com/EmilioCliff/payment-polling-app/gateway-service/docs/docs.go (100.0%)</option>
+				
+				<option value="file2">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/gRPC/auth.go (100.0%)</option>
+				
+				<option value="file3">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/gRPC/client.go (100.0%)</option>
+				
+				<option value="file4">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http/auth.go (76.7%)</option>
+				
+				<option value="file5">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http/handlers.go (91.7%)</option>
+				
+				<option value="file6">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http/middleware.go (100.0%)</option>
+				
+				<option value="file7">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http/server.go (90.9%)</option>
+				
+				<option value="file8">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/mock/grpc-service.go (50.0%)</option>
+				
+				<option value="file9">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/mock/http-service.go (50.0%)</option>
+				
+				<option value="file10">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/mock/rabbitmq-service.go (40.0%)</option>
+				
+				<option value="file11">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq/auth.go (0.0%)</option>
+				
+				<option value="file12">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq/connect.go (0.0%)</option>
+				
+				<option value="file13">github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq/payment.go (0.0%)</option>
+				
+				<option value="file14">github.com/EmilioCliff/payment-polling-app/gateway-service/pkg/config.go (0.0%)</option>
+				
+				<option value="file15">github.com/EmilioCliff/payment-polling-app/gateway-service/pkg/errors.go (0.0%)</option>
+				
+				<option value="file16">github.com/EmilioCliff/payment-polling-app/gateway-service/pkg/token.go (81.1%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "fmt"
+        "log"
+        "math"
+        "time"
+
+        _ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/gRPC"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        amqp "github.com/rabbitmq/amqp091-go"
+)
+
+// @title Payment Polling App
+// @version 1.0
+// @description Payment Polling App is an online polling payment gateway service.
+
+// @host localhost:8080
+func main() <span class="cov0" title="0">{
+        config, err := pkg.LoadConfig(".")
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Failed to load config: %v", err)
+                return
+        }</span>
+
+        <span class="cov0" title="0">conn, err := connectToRabit(config.RABBITMQ_URL)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Failed to connect to RabbitMQ: %s", err)
+                return
+        }</span>
+        <span class="cov0" title="0">defer conn.Close()
+
+        ch, err := conn.Channel()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Failed to create gateway RabbitMQ channel: %s", err)
+                return
+        }</span>
+        <span class="cov0" title="0">defer ch.Close()
+
+        maker, err := pkg.NewJWTMaker(config.PRIVATE_KEY_PATH, config.PUBLIC_KEY_PATH)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to create token maker: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">server := http.NewHttpServer(*maker)
+
+        rpcClient := gRPC.NewGrpcClient()
+        err = rpcClient.Start(config.AUTH_GRPC_PORT)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("failed to get grpc client: %v", err)
+                return
+        }</span>
+
+        <span class="cov0" title="0">rabbitHandler := rabbitmq.NewRabbitHandler(ch, config)
+
+        httpService := http.NewHTTPService(config)
+
+        server.GRPCService = rpcClient
+        server.RabbitService = rabbitHandler
+        server.HTTPService = httpService
+
+        go server.RabbitService.SetConsumer([]string{"gateway.initiate_payment", "gateway.poll_payments", "gateway.register_user", "gateway.login_user"})
+
+        log.Printf("Starting server on port: %s", config.SERVER_ADDRESS)
+        err = server.Start(config.SERVER_ADDRESS)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("Failed to start gateway service: %s", err)
+                return
+        }</span>
+}
+
+func connectToRabit(uri string) (*amqp.Connection, error) <span class="cov0" title="0">{
+        count := 0
+        rollOff := 1 * time.Second
+        var err error
+        var connection *amqp.Connection
+        for </span><span class="cov0" title="0">{
+                connection, err = amqp.Dial(uri)
+                if err != nil </span><span class="cov0" title="0">{
+                        log.Println("failed to connect to rabbitmq", err)
+                        if count &gt; 12 </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
+                        <span class="cov0" title="0">count++
+                        rollOff = time.Duration(math.Pow(float64(count), 2)) * time.Second
+                        time.Sleep(rollOff)
+                        continue</span>
+                }
+                <span class="cov0" title="0">fmt.Println("Connected to rabbitmq")
+                break</span>
+        }
+
+        <span class="cov0" title="0">return connection, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+    "schemes": {{ marshal .Schemes }},
+    "swagger": "2.0",
+    "info": {
+        "description": "{{escape .Description}}",
+        "title": "{{.Title}}",
+        "contact": {},
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/initiate-payment": {
+            "post": {
+                "description": "Initiates a payment transaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Initiate a payment",
+                "parameters": [
+                    {
+                        "description": "payment details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.InitiatePaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.InitiatePaymentResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Logs in a user with credentials.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Login a user",
+                "parameters": [
+                    {
+                        "description": "users credetials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.LoginUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.LoginUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/poll-payment/{id}": {
+            "get": {
+                "description": "Polls the status of a payment transaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Poll a payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Transaction ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.PollingTransactionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Registers a new user in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Register a user",
+                "parameters": [
+                    {
+                        "description": "users details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.RegisterUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.RegisterUserResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "services.InitiatePaymentRequest": {
+            "type": "object",
+            "required": [
+                "action",
+                "amount",
+                "naration",
+                "network_code",
+                "phone_number",
+                "user_id"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "naration": {
+                    "type": "string"
+                },
+                "network_code": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.InitiatePaymentResponse": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "payment_status": {
+                    "type": "boolean"
+                },
+                "status_code": {
+                    "type": "integer"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.LoginUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.LoginUserResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.PollingTransactionResponse": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "naration": {
+                    "type": "string"
+                },
+                "network_code": {
+                    "type": "string"
+                },
+                "payd_password_api_key": {
+                    "type": "string"
+                },
+                "payd_transaction_ref": {
+                    "type": "string"
+                },
+                "payd_username": {
+                    "type": "string"
+                },
+                "payd_username_api_key": {
+                    "type": "string"
+                },
+                "payment_status": {
+                    "type": "boolean"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.RegisterUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name",
+                "password",
+                "payd_password_api_key",
+                "payd_username",
+                "payd_username_api_key"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "payd_password_api_key": {
+                    "type": "string"
+                },
+                "payd_username": {
+                    "type": "string"
+                },
+                "payd_username_api_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.RegisterUserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "externalDocs": {
+        "url": "https://swagger.io/resources/open-api/"
+    }
+}`
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = &amp;swag.Spec{
+        Version:          "1.0",
+        Host:             "localhost:8080",
+        BasePath:         "",
+        Schemes:          []string{"http", "https"},
+        Title:            "Payment Polling App",
+        Description:      "Payment Polling App is an online polling payment gateway service.",
+        InfoInstanceName: "swagger",
+        SwaggerTemplate:  docTemplate,
+}
+
+func init() <span class="cov8" title="1">{
+        swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package gRPC
+
+import (
+        "context"
+        "net/http"
+        "time"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
+        "github.com/gin-gonic/gin"
+        "google.golang.org/grpc/status"
+)
+
+func (g *GrpcClient) RegisterUserViagRPC(req services.RegisterUserRequest) (int, gin.H) <span class="cov8" title="1">{
+        c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+        defer cancel()
+
+        rsp, err := g.authgRPClient.RegisterUser(c, &amp;pb.RegisterUserRequest{
+                Fullname:           req.FullName,
+                Email:              req.Email,
+                Password:           req.Password,
+                PaydUsername:       req.PaydUsername,
+                PaydPasswordApiKey: req.PasswordApiKey,
+                PaydUsernameApiKey: req.UsernameApiKey,
+                PaydAccountId: req.PaydAccountID,
+        })
+        if err != nil </span><span class="cov8" title="1">{
+                st, ok := status.FromError(err)
+                if ok </span><span class="cov8" title="1">{
+                        grpcCode := st.Code()
+                        grpcMessage := st.Message()
+                        return g.grpcErrorResponse(grpcCode, grpcMessage)
+                }</span> else<span class="cov8" title="1"> {
+                        return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
+                }</span>
+        }
+
+        <span class="cov8" title="1">return http.StatusOK, gin.H{"response": rsp}</span>
+}
+
+func (g *GrpcClient) LoginUserViagRPC(req services.LoginUserRequest) (int, gin.H) <span class="cov8" title="1">{
+        c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+        defer cancel()
+
+        rsp, err := g.authgRPClient.LoginUser(c, &amp;pb.LoginUserRequest{
+                Email:    req.Email,
+                Password: req.Password,
+        })
+        if err != nil </span><span class="cov8" title="1">{
+                st, ok := status.FromError(err)
+                if ok </span><span class="cov8" title="1">{
+                        grpcCode := st.Code()
+                        grpcMessage := st.Message()
+                        return g.grpcErrorResponse(grpcCode, grpcMessage)
+                }</span> else<span class="cov8" title="1"> {
+                        return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
+                }</span>
+        }
+
+        <span class="cov8" title="1">return http.StatusOK, gin.H{"response": rsp}</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package gRPC
+
+import (
+        "net/http"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
+        "github.com/gin-gonic/gin"
+        "google.golang.org/grpc"
+        "google.golang.org/grpc/codes"
+        "google.golang.org/grpc/credentials/insecure"
+)
+
+var _ services.GrpcInterface = (*GrpcClient)(nil)
+
+type GrpcDialFunc func(target string, opts ...grpc.DialOption) (*grpc.ClientConn, error)
+
+type GrpcClient struct {
+        authgRPClient pb.AuthenticationServiceClient
+        dialFunc      GrpcDialFunc
+}
+
+func NewGrpcClient() *GrpcClient <span class="cov8" title="1">{
+        return &amp;GrpcClient{
+                dialFunc: grpc.NewClient,
+        }
+}</span>
+
+func (g *GrpcClient) Start(grpcPort string) error <span class="cov8" title="1">{
+        gRPCconn, err := g.dialFunc(grpcPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">g.authgRPClient = pb.NewAuthenticationServiceClient(gRPCconn)
+        return nil</span>
+}
+
+func (g *GrpcClient) grpcErrorResponse(code codes.Code, msg string) (int, gin.H) <span class="cov8" title="1">{
+        switch code </span>{
+        case codes.Internal:<span class="cov8" title="1">
+                return http.StatusInternalServerError, gin.H{
+                        "message": msg,
+                }</span>
+        case codes.NotFound:<span class="cov8" title="1">
+                return http.StatusNotFound, gin.H{
+                        "message": msg,
+                }</span>
+        case codes.AlreadyExists:<span class="cov8" title="1">
+                return http.StatusForbidden, gin.H{
+                        "message": msg,
+                }</span>
+        case codes.Unauthenticated:<span class="cov8" title="1">
+                return http.StatusUnauthorized, gin.H{
+                        "message": msg,
+                }</span>
+        case codes.PermissionDenied:<span class="cov8" title="1">
+                return http.StatusForbidden, gin.H{
+                        "message": msg,
+                }</span>
+        default:<span class="cov8" title="1">
+                return http.StatusInternalServerError, gin.H{
+                        "message": msg,
+                }</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package http
+
+import (
+        "bytes"
+        "encoding/json"
+        "errors"
+        "fmt"
+        "io"
+        "net/http"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/gin-gonic/gin"
+)
+
+var _ services.HttpInterface = (*HTTPService)(nil)
+
+type HTTPService struct {
+        registerPath string
+        loginPath string
+        config pkg.Config
+}
+
+func NewHTTPService(config pkg.Config) *HTTPService <span class="cov8" title="1">{return &amp;HTTPService{
+        config: config,
+        registerPath: "auth/register",
+        loginPath: "auth/login",
+}}</span>
+
+func (s *HTTPService) RegisterUserViaHttp(req services.RegisterUserRequest) (int, gin.H) <span class="cov8" title="1">{
+        jsonData, err := json.Marshal(req)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't marshal request data")
+        }</span>
+
+        <span class="cov8" title="1">request, err := http.NewRequest("POST", fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.registerPath), bytes.NewBuffer(jsonData))
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't create request to authApp")
+        }</span>
+
+        <span class="cov8" title="1">client := &amp;http.Client{}
+        response, err := client.Do(request)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't send request to authApp")
+        }</span>
+        <span class="cov8" title="1">defer response.Body.Close()
+
+        responseBody, err := io.ReadAll(response.Body)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't read response body from authApp")
+        }</span>
+
+        <span class="cov8" title="1">var authServiceResponse services.RegisterUserResponse
+
+        err = json.Unmarshal(responseBody, &amp;authServiceResponse)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't unmarshal response body from authApp")
+        }</span>
+
+        <span class="cov8" title="1">if response.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                return response.StatusCode, pkg.ErrorResponse(errors.New(authServiceResponse.Message), "Failed to register new user")
+        }</span>
+
+        <span class="cov8" title="1">return http.StatusOK, gin.H{"response": authServiceResponse}</span>
+}
+
+func (s *HTTPService) LoginUserViaHttp(req services.LoginUserRequest) (int, gin.H) <span class="cov8" title="1">{
+        jsonData, err := json.Marshal(req)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't marshal request data")
+        }</span>
+
+        <span class="cov8" title="1">request, err := http.NewRequest("POST", fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.loginPath), bytes.NewBuffer(jsonData))
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't create request to authApp")
+        }</span>
+
+        <span class="cov8" title="1">client := &amp;http.Client{}
+        response, err := client.Do(request)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't send request to authApp")
+        }</span>
+        <span class="cov8" title="1">defer response.Body.Close()
+
+        responseBody, err := io.ReadAll(response.Body)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't read response body from authApp")
+        }</span>
+
+        <span class="cov8" title="1">var jsonFromAuthService services.LoginUserResponse
+
+        err = json.Unmarshal(responseBody, &amp;jsonFromAuthService)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't unmarshal response body from authApp")
+        }</span>
+
+        <span class="cov8" title="1">if response.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                return response.StatusCode, pkg.ErrorResponse(errors.New(jsonFromAuthService.Message), "Failed to login user")
+        }</span>
+
+        <span class="cov8" title="1">return http.StatusOK, gin.H{"response": jsonFromAuthService}</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package http
+
+import (
+        "net/http"
+
+        _ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/gin-gonic/gin"
+)
+
+// RegisterUser godoc
+// @Summary      Register a user
+// @Description  Registers a new user in the database.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request body services.RegisterUserRequest true "users details"
+// @Success      200 {object} services.RegisterUserResponse{}
+// @Router       /register [post]
+func (s *HttpServer) handleRegisterUser(ctx *gin.Context) <span class="cov8" title="1">{
+        var req services.RegisterUserRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+                return
+        }</span>
+
+        <span class="cov8" title="1">statusCode, rsp := s.GRPCService.RegisterUserViagRPC(req)
+        ctx.JSON(statusCode, rsp)</span>
+}
+
+// LoginUser godoc
+// @Summary      Login a user
+// @Description  Logs in a user with credentials.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request body services.LoginUserRequest true "users credetials"
+// @Success      200 {object} services.LoginUserResponse{}
+// @Router       /login [post]
+func (s *HttpServer) handleLoginUser(ctx *gin.Context) <span class="cov8" title="1">{
+        var req services.LoginUserRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+                return
+        }</span>
+
+        // statusCode, rsp := s.GrpcClient.LoginUserViagRPC(req)
+        <span class="cov8" title="1">statusCode, rsp := s.HTTPService.LoginUserViaHttp(req)
+        ctx.JSON(statusCode, rsp)</span>
+}
+
+// InitiatePayment godoc
+// @Summary      Initiate a payment
+// @Description  Initiates a payment transaction.
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Param        request body services.InitiatePaymentRequest true "payment details"
+// @Success      200 {object} services.InitiatePaymentResponse{}
+// @Router       /initiate-payment [post]
+func (s *HttpServer) handleInitiatePayment(ctx *gin.Context) <span class="cov8" title="1">{
+        var req services.InitiatePaymentRequest
+        if err := ctx.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+                ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+                return
+        }</span>
+
+        <span class="cov8" title="1">statusCode, rsp := s.RabbitService.InitiatePaymentViaRabbit(req)
+        ctx.JSON(statusCode, rsp)</span>
+}
+
+// PollPayment godoc
+// @Summary      Poll a payment
+// @Description  Polls the status of a payment transaction.
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Transaction ID"
+// @Success      200 {object} services.PollingTransactionResponse{}
+// @Router       /poll-payment/{id} [get]
+func (s *HttpServer) handlePaymentPolling(ctx *gin.Context) <span class="cov8" title="1">{
+        var req services.PollingTransactionRequest
+        if err := ctx.ShouldBindUri(&amp;req); err != nil </span><span class="cov0" title="0">{
+                ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+                return
+        }</span>
+
+        <span class="cov8" title="1">statusCode, rsp := s.RabbitService.PollTransactionViaRabbit(req)
+        ctx.JSON(statusCode, rsp)</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package http
+
+import (
+        "errors"
+        "net/http"
+        "strings"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/gin-gonic/gin"
+)
+
+const (
+        authorizationHeaderKey  = "authorization"
+        authorizationPayloadKey = "authorization_payload"
+)
+
+func authenticationMiddleware(tokenMaker pkg.JWTMaker) gin.HandlerFunc <span class="cov8" title="1">{
+        return func(ctx *gin.Context) </span><span class="cov8" title="1">{
+                authorizatonHeader := ctx.GetHeader(authorizationHeaderKey)
+                if len(authorizatonHeader) == 0 </span><span class="cov8" title="1">{
+                        err := errors.New("authorization header is not provided")
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": false, "data": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">fields := strings.Fields(authorizatonHeader)
+                if len(fields) &lt; 2 </span><span class="cov8" title="1">{
+                        err := errors.New("invalid authorization header format")
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": false, "data": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">if fields[0] != "Bearer" </span><span class="cov8" title="1">{
+                        err := errors.New("invalid authorization header format")
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": false, "data": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">accessToken := fields[1]
+
+                payload, err := tokenMaker.VerifyToken(accessToken)
+                if err != nil </span><span class="cov8" title="1">{
+                        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"status": false, "data": err.Error()})
+                        return
+                }</span>
+
+                <span class="cov8" title="1">ctx.Set(authorizationPayloadKey, payload)
+                ctx.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package http
+
+import (
+        _ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/gin-gonic/gin"
+
+        swaggerfiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+type HttpServer struct {
+        router *gin.Engine
+        maker pkg.JWTMaker
+
+        HTTPService services.HttpInterface
+        RabbitService services.RabbitInterface
+        GRPCService   services.GrpcInterface
+}
+
+func NewHttpServer(maker pkg.JWTMaker) *HttpServer <span class="cov8" title="1">{
+        server := &amp;HttpServer{
+                maker: maker,
+        }
+
+        server.setRoutes()
+
+        return server
+}</span>
+
+func (s *HttpServer) setRoutes() <span class="cov8" title="1">{
+        r := gin.Default()
+
+        r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+        r.POST("/register", s.handleRegisterUser)
+        r.POST("/login", s.handleLoginUser)                   // need authentication
+        r.POST("/payments/initiate", s.handleInitiatePayment) // need authentication
+        r.GET("/payments/status/:id", s.handlePaymentPolling) // need authentication
+
+        s.router = r
+}</span>
+
+func (s *HttpServer) Start(addr string) error <span class="cov0" title="0">{
+        return s.router.Run(addr)
+}</span>
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package mock
+
+import (
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/gin-gonic/gin"
+)
+
+var _ services.GrpcInterface = (*MockGrpcService)(nil)
+
+type MockGrpcService struct {
+        RegisterUserViagRPCFunc func (services.RegisterUserRequest) (int, gin.H)
+        LoginUserViagRPCFunc func (services.LoginUserRequest) (int, gin.H)
+}
+
+func (m *MockGrpcService) RegisterUserViagRPC(req services.RegisterUserRequest) (int, gin.H) <span class="cov8" title="1">{
+        return m.RegisterUserViagRPCFunc(req)
+}</span>
+func (m *MockGrpcService) LoginUserViagRPC(req services.LoginUserRequest) (int, gin.H) <span class="cov0" title="0">{
+        return m.LoginUserViagRPCFunc(req)
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package mock
+
+import (
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/gin-gonic/gin"
+)
+
+var _ services.HttpInterface = (*MockHttpService)(nil)
+
+type MockHttpService struct {
+        RegisterUserViaHttpFunc func (services.RegisterUserRequest) (int, gin.H)
+        LoginUserViaHttpFunc func (services.LoginUserRequest) (int, gin.H)
+}
+
+func (m *MockHttpService) RegisterUserViaHttp(req services.RegisterUserRequest) (int, gin.H) <span class="cov0" title="0">{
+        return m.RegisterUserViaHttpFunc(req)
+}</span>
+
+func (m *MockHttpService) LoginUserViaHttp(req services.LoginUserRequest) (int, gin.H) <span class="cov8" title="1">{
+        return m.LoginUserViaHttpFunc(req)
+}</pre>
+		
+		<pre class="file" id="file10" style="display: none">package mock
+
+import (
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/gin-gonic/gin"
+)
+
+var _ services.RabbitInterface = (*MockRabbitMQService)(nil)
+
+type MockRabbitMQService struct {
+        RegisterUserViaRabbitFunc func (services.RegisterUserRequest) (int, gin.H)
+        LoginUserViaRabbitFunc func (services.LoginUserRequest) (int, gin.H)
+        InitiatePaymentViaRabbitFunc func (services.InitiatePaymentRequest) (int, gin.H)
+        PollTransactionViaRabbitFunc func (services.PollingTransactionRequest) (int, gin.H)
+
+        SetConsumerFunc func (topics []string) error
+}
+
+func (m *MockRabbitMQService) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, gin.H) <span class="cov0" title="0">{
+        return m.RegisterUserViaRabbitFunc(req)
+}</span>
+func (m *MockRabbitMQService) LoginUserViaRabbit(req services.LoginUserRequest) (int, gin.H) <span class="cov0" title="0">{
+        return m.LoginUserViaRabbitFunc(req)
+}</span>
+func (m *MockRabbitMQService) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, gin.H) <span class="cov8" title="1">{
+        return m.InitiatePaymentViaRabbitFunc(req)
+}</span>
+func (m *MockRabbitMQService) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, gin.H) <span class="cov8" title="1">{
+        return m.PollTransactionViaRabbitFunc(req)
+}</span>
+func (m *MockRabbitMQService) SetConsumer(topics []string) error <span class="cov0" title="0">{
+        return m.SetConsumerFunc(topics)
+}</pre>
+		
+		<pre class="file" id="file11" style="display: none">package rabbitmq
+
+import (
+        "context"
+        "encoding/json"
+        "net/http"
+        "time"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/gin-gonic/gin"
+        "github.com/google/uuid"
+        amqp "github.com/rabbitmq/amqp091-go"
+)
+
+func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, gin.H) <span class="cov0" title="0">{
+        payload := services.Payload{
+                Name: "register_user",
+                Data: req,
+        }
+
+        payloadRabitData, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+        }</span>
+
+        <span class="cov0" title="0">correlationID := uuid.New().String()
+        responseChannel := make(chan amqp.Delivery, 1)
+        defer close(responseChannel)
+
+        r.RspMap.Set(correlationID, responseChannel)
+        defer r.RspMap.Delete(correlationID)
+
+        c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        err = r.Channel.PublishWithContext(c,
+                r.config.EXCH,                  // exchange
+                "authentication.register_user", // routing key
+                false,                          // mandatory
+                false,                          // immediate
+                amqp.Publishing{
+                        ContentType:   "text/plain",
+                        CorrelationId: correlationID,
+                        ReplyTo:       "gateway.register_user",
+                        Body:          payloadRabitData,
+                })
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error communicating to the authentication service via rabbitmq")
+        }</span>
+
+        <span class="cov0" title="0">select </span>{
+        case msg := &lt;-responseChannel:<span class="cov0" title="0">
+                if msg.CorrelationId == correlationID </span><span class="cov0" title="0">{
+                        var authResp services.RegisterUserResponse
+
+                        err := json.Unmarshal(msg.Body, &amp;authResp)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return http.StatusInternalServerError, gin.H{"error": "Failed to parse response"}
+                        }</span>
+
+                        <span class="cov0" title="0">if authResp.Message != "" </span><span class="cov0" title="0">{
+                                return authResp.StatusCode, gin.H{"error": authResp.Message}
+                        }</span>
+
+                        <span class="cov0" title="0">return http.StatusOK, gin.H{"response": authResp}</span>
+                }
+        case &lt;-time.After(5 * time.Second):<span class="cov0" title="0">
+                return http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"}</span>
+        }
+
+        <span class="cov0" title="0">return http.StatusInternalServerError, gin.H{"error": "unknown error"}</span>
+}
+func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, gin.H) <span class="cov0" title="0">{
+        payload := services.Payload{
+                Name: "login_user",
+                Data: req,
+        }
+
+        payloadRabitData, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+        }</span>
+
+        <span class="cov0" title="0">correlationID := uuid.New().String()
+        responseChannel := make(chan amqp.Delivery, 1)
+        defer close(responseChannel)
+
+        r.RspMap.Set(correlationID, responseChannel)
+        defer r.RspMap.Delete(correlationID)
+
+        c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        err = r.Channel.PublishWithContext(c,
+                r.config.EXCH,               // exchange
+                "authentication.login_user", // routing key
+                false,                       // mandatory
+                false,                       // immediate
+                amqp.Publishing{
+                        ContentType:   "text/plain",
+                        CorrelationId: correlationID,
+                        ReplyTo:       "gateway.login_user",
+                        Body:          payloadRabitData,
+                })
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error communicating to the authentication service via rabbitmq")
+        }</span>
+
+        <span class="cov0" title="0">select </span>{
+        case msg := &lt;-responseChannel:<span class="cov0" title="0">
+                if msg.CorrelationId == correlationID </span><span class="cov0" title="0">{
+                        var loginResp services.LoginUserResponse
+
+                        err := json.Unmarshal(msg.Body, &amp;loginResp)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return http.StatusInternalServerError, gin.H{"error": "Failed to parse response"}
+                        }</span>
+
+                        <span class="cov0" title="0">if loginResp.Message != "" </span><span class="cov0" title="0">{
+                                return loginResp.StatusCode, gin.H{"error": loginResp.Message}
+                        }</span>
+
+                        <span class="cov0" title="0">return http.StatusOK, gin.H{"response": loginResp}</span>
+                }
+
+        case &lt;-time.After(5 * time.Second):<span class="cov0" title="0">
+                return http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"}</span>
+        }
+
+        <span class="cov0" title="0">return http.StatusInternalServerError, gin.H{"error": "unknown error"}</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package rabbitmq
+
+import (
+        "log"
+        "sync"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        amqp "github.com/rabbitmq/amqp091-go"
+)
+
+var _ services.RabbitInterface = (*RabbitHandler)(nil)
+
+type RabbitHandler struct {
+        Channel *amqp.Channel
+        RspMap  *responseMap
+        config  pkg.Config
+}
+
+type responseMap struct {
+        mu   sync.RWMutex
+        data map[string]chan amqp.Delivery
+}
+
+func NewRabbitHandler(channel *amqp.Channel, config pkg.Config) *RabbitHandler <span class="cov0" title="0">{
+        return &amp;RabbitHandler{
+                RspMap:  NewResponseMap(),
+                config:  config,
+                Channel: channel,
+        }
+}</span>
+
+func NewResponseMap() *responseMap <span class="cov0" title="0">{
+        return &amp;responseMap{
+                data: make(map[string]chan amqp.Delivery),
+        }
+}</span>
+
+func (r *RabbitHandler) SetConsumer(topics []string) error <span class="cov0" title="0">{
+        q, err := r.Channel.QueueDeclare(
+                r.config.EXCLUSIVE_QUEUE_NAME, // name
+                false,                         // durable
+                false,                         // delete when unused
+                false,                         // exclusive
+                false,                         // no-wait
+                nil,                           // arguments
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">for _, topic := range topics </span><span class="cov0" title="0">{
+                if err := r.Channel.QueueBind(
+                        q.Name,        // queue name
+                        topic,         // routing key
+                        r.config.EXCH, // exchange
+                        false,
+                        nil,
+                ); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov0" title="0">messages, err := r.Channel.Consume(
+                q.Name,            // queue
+                "gateway_service", // consumer
+                true,              // auto ack
+                false,             // exclusive
+                false,             // no local
+                false,             // no wait
+                nil,               // args
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">forever := make(chan bool)
+
+        go func() </span><span class="cov0" title="0">{
+                for msg := range messages </span><span class="cov0" title="0">{
+                        if ch, ok := r.RspMap.Get(msg.CorrelationId); ok </span><span class="cov0" title="0">{
+                                ch &lt;- msg
+                                log.Println("Message acknoledged from callback queue", msg.DeliveryTag)
+                                // log.Println(msg)
+                        }</span>
+                }
+        }()
+
+        <span class="cov0" title="0">log.Println("listening to messages in gateway service")
+
+        &lt;-forever
+
+        return nil</span>
+}
+
+func (rm *responseMap) Set(correlationID string, channel chan amqp.Delivery) <span class="cov0" title="0">{
+        rm.mu.Lock()
+        defer rm.mu.Unlock()
+        rm.data[correlationID] = channel
+}</span>
+
+func (rm *responseMap) Get(correlationID string) (chan amqp.Delivery, bool) <span class="cov0" title="0">{
+        rm.mu.RLock()
+        defer rm.mu.RUnlock()
+        ch, exists := rm.data[correlationID]
+        return ch, exists
+}</span>
+
+func (rm *responseMap) Delete(correlationID string) <span class="cov0" title="0">{
+        rm.mu.Lock()
+        defer rm.mu.Unlock()
+        delete(rm.data, correlationID)
+}</span>
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package rabbitmq
+
+import (
+        "context"
+        "encoding/json"
+        "net/http"
+        "time"
+
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+        "github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+        "github.com/gin-gonic/gin"
+        "github.com/google/uuid"
+        amqp "github.com/rabbitmq/amqp091-go"
+)
+
+func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, gin.H) <span class="cov0" title="0">{
+        payload := services.Payload{
+                Name: "initiate_payment",
+                Data: req,
+        }
+
+        payloadRabitData, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+        }</span>
+
+        <span class="cov0" title="0">correlationID := uuid.New().String()
+        responseChannel := make(chan amqp.Delivery, 1)
+        defer close(responseChannel)
+
+        r.RspMap.Set(correlationID, responseChannel)
+        defer r.RspMap.Delete(correlationID)
+
+        c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        err = r.Channel.PublishWithContext(c,
+                r.config.EXCH,               // exchange
+                "payments.initiate_payment", // routing key
+                false,                       // mandatory
+                false,                       // immediate
+                amqp.Publishing{
+                        ContentType:   "text/plain",
+                        CorrelationId: correlationID,
+                        ReplyTo:       "gateway.initiate_payment",
+                        Body:          payloadRabitData,
+                })
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error communicating to the payment service via rabbitmq")
+        }</span>
+
+        <span class="cov0" title="0">select </span>{
+        case msg := &lt;-responseChannel:<span class="cov0" title="0">
+                if msg.CorrelationId == correlationID </span><span class="cov0" title="0">{
+                        var paymentResp services.InitiatePaymentResponse
+
+                        err := json.Unmarshal(msg.Body, &amp;paymentResp)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error unmarshalling response")
+                        }</span>
+
+                        <span class="cov0" title="0">if paymentResp.Message != "" </span><span class="cov0" title="0">{
+                                return paymentResp.StatusCode, gin.H{"error": paymentResp.Message}
+                        }</span>
+
+                        <span class="cov0" title="0">return http.StatusOK, gin.H{"response": paymentResp}</span>
+                }
+        case &lt;-time.After(5 * time.Second):<span class="cov0" title="0">
+                return http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"}</span>
+        }
+
+        <span class="cov0" title="0">return http.StatusInternalServerError, gin.H{"error": "unknown error"}</span>
+}
+
+type pollingTransactionRabbitRequest struct {
+        TransactionId string `json:"transaction_id"`
+}
+
+func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, gin.H) <span class="cov0" title="0">{
+        payload := services.Payload{
+                Name: "polling_transaction",
+                Data: pollingTransactionRabbitRequest{
+                        TransactionId: req.TransactionId,
+                },
+        }
+
+        payloadRabitData, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+        }</span>
+
+        <span class="cov0" title="0">correlationID := uuid.New().String()
+        responseChannel := make(chan amqp.Delivery, 1)
+        defer close(responseChannel)
+
+        r.RspMap.Set(correlationID, responseChannel)
+        defer r.RspMap.Delete(correlationID)
+
+        c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        err = r.Channel.PublishWithContext(c,
+                r.config.EXCH,            // exchange
+                "payments.poll_payments", // routing key
+                false,                    // mandatory
+                false,                    // immediate
+                amqp.Publishing{
+                        ContentType:   "text/plain",
+                        CorrelationId: correlationID,
+                        ReplyTo:       "gateway.poll_payments",
+                        Body:          payloadRabitData,
+                })
+        if err != nil </span><span class="cov0" title="0">{
+                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error communicating to the payment service via rabbitmq")
+        }</span>
+
+        <span class="cov0" title="0">select </span>{
+        case msg := &lt;-responseChannel:<span class="cov0" title="0">
+                if msg.CorrelationId == correlationID </span><span class="cov0" title="0">{
+                        var pollResp services.PollingTransactionResponse
+
+                        err := json.Unmarshal(msg.Body, &amp;pollResp)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return http.StatusInternalServerError, pkg.ErrorResponse(err, "error unmarshalling response")
+                        }</span>
+
+                        <span class="cov0" title="0">if pollResp.Message != "" </span><span class="cov0" title="0">{
+                                return pollResp.StatusCode, gin.H{"error": pollResp.Message}
+                        }</span>
+
+                        <span class="cov0" title="0">return http.StatusOK, gin.H{"response": pollResp}</span>
+                }
+        case &lt;-time.After(5 * time.Second):<span class="cov0" title="0">
+                return http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"}</span>
+        }
+
+        <span class="cov0" title="0">return http.StatusInternalServerError, gin.H{"error": "unknown error"}</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package pkg
+
+import "github.com/spf13/viper"
+
+type Config struct {
+        SERVER_ADDRESS       string `mapstructure:"SERVER_ADDRESS"`
+        RABBITMQ_URL         string `mapstructure:"RABBITMQ_URL"`
+        QUEUE_NAME           string `mapstructure:"QUEUE_NAME"`
+        EXCH                 string `mapstructure:"EXCH"`
+        EXCLUSIVE_QUEUE_NAME string `mapstructure:"EXCLUSIVE_QUEUE_NAME"`
+        AUTH_GRPC_PORT string `mapstructure:"AUTH_GRPC_PORT"`
+        AUTH_HTTP_PORT string `mapstructure:"AUTH_HTTP_PORT"`
+        PRIVATE_KEY_PATH  string        `mapstructure:"PRIVATE_KEY_PATH"`
+        PUBLIC_KEY_PATH   string        `mapstructure:"PUBLIC_KEY_PATH"`
+}
+
+func LoadConfig(path string) (config Config, err error) <span class="cov0" title="0">{
+        viper.AddConfigPath(path)
+
+        viper.AutomaticEnv()
+
+        if err = viper.ReadInConfig(); err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">err = viper.Unmarshal(&amp;config)
+
+        return</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package pkg
+
+import (
+        "fmt"
+
+        "github.com/gin-gonic/gin"
+)
+
+const (
+        ALREADY_EXISTS_ERROR  = "already_exists"
+        INTERNAL_ERROR        = "internal"
+        INVALID_ERROR         = "invalid"
+        NOT_FOUND_ERROR       = "not_found"
+        NOT_IMPLEMENTED_ERROR = "not_implemented"
+        AUTHENTICATION_ERROR  = "authentication"
+)
+
+type Error struct {
+        Code    string
+        Message string
+}
+
+func Errorf(code string, format string, args ...interface{}) *Error <span class="cov0" title="0">{
+        return &amp;Error{
+                Code:    code,
+                Message: fmt.Sprintf(format, args...),
+        }
+}</span>
+
+func ErrorResponse(err error, msg string) gin.H <span class="cov0" title="0">{
+        return gin.H{
+                "message": msg,
+                "error":   err.Error(),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package pkg
+
+import (
+        "crypto/rsa"
+        "errors"
+        "fmt"
+        "os"
+        "time"
+
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/google/uuid"
+)
+
+var (
+        ErrInvalidToken  = errors.New("token is invalid")
+        ErrInvalidIssuer = errors.New("invalid issuer")
+        ErrTokenExpired  = fmt.Errorf("token is expired")
+)
+
+type Payload struct {
+        ID       uuid.UUID `json:"id"`
+        Username string    `json:"fullname"`
+        jwt.RegisteredClaims
+}
+
+type JWTMaker struct {
+        PublicKey  *rsa.PublicKey
+        PrivateKey *rsa.PrivateKey
+}
+
+func NewJWTMaker(privateKeyPath string, publicKeyPath string) (*JWTMaker, error) <span class="cov8" title="1">{
+        privateKeyBytes, err := os.ReadFile(privateKeyPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to read private key: %s", err)
+        }</span>
+
+        <span class="cov8" title="1">privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse private key: %s", err)
+        }</span>
+
+        <span class="cov8" title="1">publicKeyBytes, err := os.ReadFile(publicKeyPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to read public key: %s", err)
+        }</span>
+
+        <span class="cov8" title="1">publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyBytes)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse public key: %s", err)
+        }</span>
+
+        <span class="cov8" title="1">maker := &amp;JWTMaker{
+                PrivateKey: privateKey,
+                PublicKey:  publicKey,
+        }
+
+        return maker, nil</span>
+}
+
+func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) <span class="cov8" title="1">{
+        uuid, err := uuid.NewRandom()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("error generating token uuid")
+        }</span>
+
+        <span class="cov8" title="1">claims := Payload{
+                uuid,
+                username,
+                jwt.RegisteredClaims{
+                        ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
+                        IssuedAt:  jwt.NewNumericDate(time.Now()),
+                        Issuer:    "authApp",
+                },
+        }
+
+        jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+        token, err := jwtToken.SignedString(maker.PrivateKey)
+        return token, err</span>
+}
+
+func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) <span class="cov8" title="1">{
+        keyFunc := func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                _, ok := token.Method.(*jwt.SigningMethodRSA)
+                if !ok </span><span class="cov8" title="1">{
+                        return nil, ErrInvalidToken
+                }</span>
+
+                <span class="cov8" title="1">return maker.PublicKey, nil</span>
+        }
+        <span class="cov8" title="1">jwtToken, err := jwt.ParseWithClaims(token, &amp;Payload{}, keyFunc)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">payload, ok := jwtToken.Claims.(*Payload)
+        if !ok </span><span class="cov0" title="0">{
+                return nil, ErrInvalidToken
+        }</span>
+
+        <span class="cov8" title="1">if payload.RegisteredClaims.Issuer != "authApp" </span><span class="cov8" title="1">{
+                return nil, ErrInvalidIssuer
+        }</span>
+
+        <span class="cov8" title="1">if payload.RegisteredClaims.ExpiresAt.Time.Before(time.Now()) </span><span class="cov0" title="0">{
+                return nil, ErrTokenExpired
+        }</span>
+
+        <span class="cov8" title="1">return payload, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

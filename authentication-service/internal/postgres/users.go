@@ -13,7 +13,7 @@ import (
 var _ repository.UserRepository = (*UserRepository)(nil)
 
 type UserRepository struct {
-	db *Store
+	db      *Store
 	queries generated.Querier
 }
 
@@ -21,7 +21,7 @@ func NewUserService(db *Store) *UserRepository {
 	queries := generated.New(db.conn)
 
 	return &UserRepository{
-		db: db,
+		db:      db,
 		queries: queries,
 	}
 }
@@ -34,17 +34,17 @@ func (s *UserRepository) CreateUser(ctx context.Context, u repository.User) (*re
 
 	hashPassword, err := pkg.GenerateHashPassword(u.Password, s.db.config.HASH_COST)
 	if err != nil {
-        return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error hashing password: %s", err)
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error hashing password: %s", err)
 	}
 
-	encryptPassApi, err := pkg.Encrypt(u.PaydPasswordKey, []byte(s.db.config.ENCRYPTION_KEY))
+	encryptPassAPI, err := pkg.Encrypt(u.PaydPasswordKey, []byte(s.db.config.ENCRYPTION_KEY))
 	if err != nil {
-        return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error encrypting password api key: %s", err)
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error encrypting password api key: %s", err)
 	}
 
-	encryptUserApi, err := pkg.Encrypt(u.PaydUsernameKey, []byte(s.db.config.ENCRYPTION_KEY))
+	encryptUserAPI, err := pkg.Encrypt(u.PaydUsernameKey, []byte(s.db.config.ENCRYPTION_KEY))
 	if err != nil {
-        return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error encrypting user api key: %s", err)
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error encrypting user api key: %s", err)
 	}
 
 	user, err := s.queries.CreateUser(ctx, generated.CreateUserParams{
@@ -52,24 +52,23 @@ func (s *UserRepository) CreateUser(ctx context.Context, u repository.User) (*re
 		Email:           u.Email,
 		Password:        hashPassword,
 		PaydUsername:    u.PaydUsername,
-		PaydUsernameKey: encryptUserApi,
-		PaydPasswordKey: encryptPassApi,
-		PaydAccountID: u.PaydAccountID,
+		PaydUsernameKey: encryptUserAPI,
+		PaydPasswordKey: encryptPassAPI,
+		PaydAccountID:   u.PaydAccountID,
 	})
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-                return nil, pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "user already exists: %s", err)
+			if pqErr.Code.Name() == "unique_violation" {
+				return nil, pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "user already exists: %s", err)
 			}
 		}
 
-        return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating user: %s", err)
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating user: %s", err)
 	}
 
 	return &repository.User{
-		FullName: user.FullName,
-		Email: user.Email,
+		FullName:  user.FullName,
+		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
 	}, nil
 }
@@ -80,19 +79,20 @@ func (s *UserRepository) GetUser(ctx context.Context, email string) (*repository
 		if err == sql.ErrNoRows {
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user not found: %s", err)
 		}
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error geting user: %s", err)
+
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error getting user: %s", err)
 	}
 
 	return &repository.User{
-		ID: user.ID,
-		FullName: user.FullName,
-		Email: user.Email,
-		Password: user.Password,
-		PaydUsername: user.PaydUsername,
-		PaydAccountID: user.PaydAccountID,
+		ID:              user.ID,
+		FullName:        user.FullName,
+		Email:           user.Email,
+		Password:        user.Password,
+		PaydUsername:    user.PaydUsername,
+		PaydAccountID:   user.PaydAccountID,
 		PaydUsernameKey: user.PaydUsernameKey,
 		PaydPasswordKey: user.PaydPasswordKey,
-		CreatedAt: user.CreatedAt,
+		CreatedAt:       user.CreatedAt,
 	}, nil
 }
 
@@ -102,18 +102,19 @@ func (s *UserRepository) GetUserByID(ctx context.Context, id int64) (*repository
 		if err == sql.ErrNoRows {
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user not found: %s", err)
 		}
-		return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "error geting user: %s", err)
+
+		return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "error getting user: %v", err)
 	}
 
 	return &repository.User{
-		ID: user.ID,
-		FullName: user.FullName,
-		Email: user.Email,
-		Password: user.Password,
-		PaydUsername: user.PaydUsername,
-		PaydAccountID: user.PaydAccountID,
+		ID:              user.ID,
+		FullName:        user.FullName,
+		Email:           user.Email,
+		Password:        user.Password,
+		PaydUsername:    user.PaydUsername,
+		PaydAccountID:   user.PaydAccountID,
 		PaydUsernameKey: user.PaydUsernameKey,
 		PaydPasswordKey: user.PaydPasswordKey,
-		CreatedAt: user.CreatedAt,
+		CreatedAt:       user.CreatedAt,
 	}, nil
 }

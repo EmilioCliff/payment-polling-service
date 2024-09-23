@@ -6,21 +6,19 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Some comments
+	_ "github.com/golang-migrate/migrate/v4/source/file"       // Some comments
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Store struct {
-	config  pkg.Config
-	conn *pgxpool.Pool
-	maker pkg.JWTMaker
+	config pkg.Config
+	conn   *pgxpool.Pool
 }
 
-func NewStore(config pkg.Config, maker pkg.JWTMaker) *Store {
+func NewStore(config pkg.Config) *Store {
 	return &Store{
 		config: config,
-		maker: maker,
 	}
 }
 

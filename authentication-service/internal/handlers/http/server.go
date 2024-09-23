@@ -11,7 +11,7 @@ import (
 type HTTPServer struct {
 	router *gin.Engine
 	config pkg.Config
-	maker pkg.JWTMaker
+	maker  pkg.JWTMaker
 
 	UserRepository repository.UserRepository
 }
@@ -19,7 +19,7 @@ type HTTPServer struct {
 func NewHTTPServer(config pkg.Config, tokenMaker pkg.JWTMaker) *HTTPServer {
 	s := &HTTPServer{
 		config: config,
-		maker: tokenMaker, 
+		maker:  tokenMaker,
 	}
 
 	s.setRoutes()

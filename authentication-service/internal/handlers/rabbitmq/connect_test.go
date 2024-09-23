@@ -11,23 +11,23 @@ import (
 )
 
 type TestRabbitConn struct {
-	rabbitConn *rabbitmq.RabbitConn
+	rabbitConn     *rabbitmq.RabbitConn
 	UserRepository mock.MockUsersRepositry
 }
 
 func NewTestRabbitConn() *TestRabbitConn {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
-    publicKey := &privateKey.PublicKey
-	
+	publicKey := &privateKey.PublicKey
+
 	r := TestRabbitConn{
 		rabbitConn: rabbitmq.NewRabbitConn(pkg.Config{
 			TOKEN_DURATION: time.Second,
 		}, pkg.JWTMaker{
-			PublicKey: publicKey,
+			PublicKey:  publicKey,
 			PrivateKey: privateKey,
 		}),
 	}

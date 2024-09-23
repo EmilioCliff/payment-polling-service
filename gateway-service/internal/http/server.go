@@ -5,28 +5,28 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/gin-gonic/gin"
-	amqp "github.com/rabbitmq/amqp091-go"
+
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type HttpServer struct {
 	router *gin.Engine
-	config pkg.Config
+	maker pkg.JWTMaker
 
 	HTTPService services.HttpInterface
 	RabbitService services.RabbitInterface
 	GRPCService   services.GrpcInterface
 }
 
-func NewHttpServer(config pkg.Config, ch *amqp.Channel) (*HttpServer, error) {
+func NewHttpServer(maker pkg.JWTMaker) *HttpServer {
 	server := &HttpServer{
-		config:       config,
+		maker: maker,
 	}
 
 	server.setRoutes()
 
-	return server, nil
+	return server
 }
 
 func (s *HttpServer) setRoutes() {

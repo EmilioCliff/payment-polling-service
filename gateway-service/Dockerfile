@@ -8,6 +8,7 @@ WORKDIR /app
 COPY --from=builder /app/gatewayApp .
 COPY --from=builder /app/.envs/.local/config.env .
 COPY --from=builder /app/docs /app/docs
+COPY --from=builder  /app/pkg/my_* /app/utils/
 
 EXPOSE 5000
 CMD ["./gatewayApp"]

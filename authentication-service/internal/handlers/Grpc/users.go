@@ -1,4 +1,4 @@
-package gRPC
+package Grpc
 
 import (
 	"context"
@@ -8,82 +8,112 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/repository"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
-	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
+	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *GRPCServer) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
+func (s *GRPCServer) RegisterUser(
+	ctx context.Context,
+	req *pb.RegisterUserRequest,
+) (*pb.RegisterUserResponse, error) {
 	user, err := s.UserRepository.CreateUser(ctx, repository.User{
-		FullName: req.GetFullname(),
-		Email: req.GetEmail(),
-		Password: req.GetPassword(),
-		PaydUsername: req.GetPaydUsername(),
+		FullName:        req.GetFullname(),
+		Email:           req.GetEmail(),
+		Password:        req.GetPassword(),
+		PaydUsername:    req.GetPaydUsername(),
 		PaydUsernameKey: req.GetPaydUsernameApiKey(),
 		PaydPasswordKey: req.GetPaydPasswordApiKey(),
-		PaydAccountID: req.GetPaydAccountId(),
+		PaydAccountID:   req.GetPaydAccountId(),
 	})
 	if err != nil {
-		grpcCode := s.convertPkgError(pkg.ErrorCode(err))
-		return nil, status.Errorf(grpcCode, fmt.Sprintf("error on register user: %s", pkg.ErrorMessage(err)))
+		grpcCode := convertPkgError(pkg.ErrorCode(err))
+
+		return nil, status.Errorf(
+			grpcCode,
+			"%v",
+			fmt.Sprintf("error on register user: %v", pkg.ErrorMessage(err)),
+		)
 	}
 
 	return &pb.RegisterUserResponse{
-		Fullname: user.FullName,
-		Email: user.Email,
+		Fullname:  user.FullName,
+		Email:     user.Email,
 		CreatedAt: timestamppb.New(user.CreatedAt),
 	}, nil
 }
 
-func (s *GRPCServer) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
+func (s *GRPCServer) LoginUser(
+	ctx context.Context,
+	req *pb.LoginUserRequest,
+) (*pb.LoginUserResponse, error) {
 	user, err := s.UserRepository.GetUser(ctx, req.GetEmail())
 	if err != nil {
-		grpcCode := s.convertPkgError(pkg.ErrorCode(err))
-		return nil, status.Errorf(grpcCode, fmt.Sprintf("error on logging user: %s", pkg.ErrorMessage(err)))
+		grpcCode := convertPkgError(pkg.ErrorCode(err))
+
+		return nil, status.Errorf(
+			grpcCode,
+			"%v",
+			fmt.Sprintf("error on logging user: %v", pkg.ErrorMessage(err)),
+		)
 	}
 
 	err = pkg.ComparePasswordAndHash(user.Password, req.GetPassword())
 	if err != nil {
-		grpcCode := s.convertPkgError(pkg.ErrorCode(err))
-		return nil, status.Errorf(grpcCode, fmt.Sprintf("Error comparing passwords: %s", pkg.ErrorMessage(err)))
+		grpcCode := convertPkgError(pkg.ErrorCode(err))
+
+		return nil, status.Errorf(
+			grpcCode,
+			"%v",
+			fmt.Sprintf("Error comparing passwords: %v", pkg.ErrorMessage(err)),
+		)
 	}
 
 	accessToken, err := s.maker.CreateToken(user.Email, s.config.TOKEN_DURATION)
 	if err != nil {
-		grpcCode := s.convertPkgError(pkg.ErrorCode(err))
-		return nil, status.Errorf(grpcCode, fmt.Sprintf("Error creating token: %s", pkg.ErrorMessage(err)))
+		grpcCode := convertPkgError(pkg.ErrorCode(err))
+
+		return nil, status.Errorf(
+			grpcCode,
+			"%v",
+			fmt.Sprintf("Error creating token: %v", pkg.ErrorMessage(err)),
+		)
 	}
 
 	return &pb.LoginUserResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
 		ExpirationAt: timestamppb.New(time.Now().Add(s.config.TOKEN_DURATION)),
 		Data: &pb.RegisterUserResponse{
-			Fullname: user.FullName,
-			Email: user.Email,
+			Fullname:  user.FullName,
+			Email:     user.Email,
 			CreatedAt: timestamppb.New(user.CreatedAt),
 		},
 	}, nil
 }
 
-func (s *GRPCServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+func (s *GRPCServer) GetUser(
+	ctx context.Context,
+	req *pb.GetUserRequest,
+) (*pb.GetUserResponse, error) {
 	user, err := s.UserRepository.GetUserByID(ctx, req.GetUserId())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "user not found")
 		}
+
 		return nil, status.Errorf(codes.Internal, "internal server error")
 	}
 
 	return &pb.GetUserResponse{
-		PaydUsername: user.PaydUsername,
+		PaydUsername:    user.PaydUsername,
 		PaydUsernameKey: user.PaydUsernameKey,
 		PaydPasswordKey: user.PaydPasswordKey,
-		PaydAccountId: user.PaydAccountID,
+		PaydAccountId:   user.PaydAccountID,
 	}, nil
 }
 
-func (s *GRPCServer) convertPkgError(err string) codes.Code {
+func convertPkgError(err string) codes.Code {
 	switch err {
 	case pkg.ALREADY_EXISTS_ERROR:
 		return codes.AlreadyExists

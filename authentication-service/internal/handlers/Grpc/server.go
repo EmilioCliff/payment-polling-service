@@ -1,4 +1,4 @@
-package gRPC
+package Grpc
 
 import (
 	"fmt"
@@ -6,16 +6,16 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/internal/repository"
 	"github.com/EmilioCliff/payment-polling-app/authentication-service/pkg"
-	pb "github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
+	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type GRPCServer struct {
-	gRPCServer *grpc.Server
 	pb.UnimplementedAuthenticationServiceServer
-	config pkg.Config
-	maker pkg.JWTMaker
+	gRPCServer *grpc.Server
+	config     pkg.Config
+	maker      pkg.JWTMaker
 
 	UserRepository repository.UserRepository
 }
@@ -23,7 +23,7 @@ type GRPCServer struct {
 func NewGRPCServer(config pkg.Config, tokenMaker pkg.JWTMaker) *GRPCServer {
 	return &GRPCServer{
 		config: config,
-		maker: tokenMaker,
+		maker:  tokenMaker,
 	}
 }
 
@@ -36,11 +36,11 @@ func (s *GRPCServer) Start(port string) error {
 
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		return fmt.Errorf("Failed to start grpc server on port: %s", err)
+		return fmt.Errorf("failed to start grpc server on port: %s", err)
 	}
 
 	if err = s.gRPCServer.Serve(listener); err != nil {
-		return fmt.Errorf("Failed to start gRPC server: %s", err)
+		return fmt.Errorf("failed to start gRPC server: %s", err)
 	}
 
 	return nil

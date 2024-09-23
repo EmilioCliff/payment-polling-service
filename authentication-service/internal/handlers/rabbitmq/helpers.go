@@ -13,22 +13,23 @@ type ErrorResponse struct {
 	Message    string `json:"message"`
 }
 
-func (r *RabbitConn) errorRabbitMQResponse(pkgErr *pkg.Error) []byte {
+func errorRabbitMQResponse(pkgErr *pkg.Error) []byte {
 	errorRsp := ErrorResponse{
-		StatusCode: r.ConvertPkgError(pkgErr),
+		StatusCode: ConvertPkgError(pkgErr),
 		Message:    pkgErr.Message,
 	}
 
 	jsonResponse, err := json.Marshal(errorRsp)
 	if err != nil {
 		log.Printf("Failed to marshal error response: %v", err)
+
 		return []byte(`{"status": false}`)
 	}
 
 	return jsonResponse
 }
 
-func (r RabbitConn) ConvertPkgError(err *pkg.Error) int {
+func ConvertPkgError(err *pkg.Error) int {
 	switch err.Code {
 	case pkg.ALREADY_EXISTS_ERROR:
 		return http.StatusConflict

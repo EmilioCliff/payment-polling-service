@@ -17,10 +17,7 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(config pkg.Config, tokenMaker pkg.JWTMaker) *HTTPServer {
-	s := &HTTPServer{
-		config: config,
-		maker:  tokenMaker,
-	}
+	s := &HTTPServer{config: config, maker: tokenMaker}
 
 	s.setRoutes()
 

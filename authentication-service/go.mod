@@ -6,6 +6,8 @@ toolchain go1.23.1
 
 require (
 	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240914231624-ad4dccafcec1
+	github.com/brianvoe/gofakeit v3.18.0+incompatible
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
@@ -22,8 +24,6 @@ require (
 )
 
 require (
-	github.com/brianvoe/gofakeit v3.18.0+incompatible // indirect
-	github.com/brianvoe/gofakeit/v7 v7.0.4 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

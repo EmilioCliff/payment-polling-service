@@ -24,12 +24,10 @@ func NewTestRabbitConn() *TestRabbitConn {
 	publicKey := &privateKey.PublicKey
 
 	r := TestRabbitConn{
-		rabbitConn: rabbitmq.NewRabbitConn(pkg.Config{
-			TOKEN_DURATION: time.Second,
-		}, pkg.JWTMaker{
-			PublicKey:  publicKey,
-			PrivateKey: privateKey,
-		}),
+		rabbitConn: rabbitmq.NewRabbitConn(
+			pkg.Config{TOKEN_DURATION: time.Second},
+			pkg.JWTMaker{PublicKey: publicKey, PrivateKey: privateKey},
+		),
 	}
 
 	r.rabbitConn.UserRepository = &r.UserRepository

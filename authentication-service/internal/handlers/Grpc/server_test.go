@@ -27,12 +27,10 @@ func NewTestGRPCServer() *TestGRPCServer {
 	publicKey := &privateKey.PublicKey
 
 	s := &TestGRPCServer{
-		server: NewGRPCServer(pkg.Config{
-			TOKEN_DURATION: time.Second,
-		}, pkg.JWTMaker{
-			PublicKey:  publicKey,
-			PrivateKey: privateKey,
-		}),
+		server: NewGRPCServer(
+			pkg.Config{TOKEN_DURATION: time.Second},
+			pkg.JWTMaker{PublicKey: publicKey, PrivateKey: privateKey},
+		),
 	}
 
 	s.server.UserRepository = &s.UserRepository
@@ -73,11 +71,11 @@ func TestGRPCServer_Start(t *testing.T) {
 			select {
 			case err := <-errCh:
 				if (err != nil) != tc.wantErr {
-					t.Errorf("GRPCServer.Run() error = %v, wantErr %v", err, tc.wantErr)
+					t.Errorf("GRPCServer.Start() error = %v, wantErr %v", err, tc.wantErr)
 				}
 			case <-ctx.Done():
 				if tc.wantErr {
-					t.Errorf("GRPCServer.Run() expected error for port %s, but got none", tc.port)
+					t.Errorf("GRPCServer.Start() expected error for port %s, but got none", tc.port)
 				}
 			}
 

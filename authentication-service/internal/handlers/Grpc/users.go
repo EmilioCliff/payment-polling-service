@@ -44,10 +44,7 @@ func (s *GRPCServer) RegisterUser(
 	}, nil
 }
 
-func (s *GRPCServer) LoginUser(
-	ctx context.Context,
-	req *pb.LoginUserRequest,
-) (*pb.LoginUserResponse, error) {
+func (s *GRPCServer) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
 	user, err := s.UserRepository.GetUser(ctx, req.GetEmail())
 	if err != nil {
 		grpcCode := convertPkgError(pkg.ErrorCode(err))
@@ -92,10 +89,7 @@ func (s *GRPCServer) LoginUser(
 	}, nil
 }
 
-func (s *GRPCServer) GetUser(
-	ctx context.Context,
-	req *pb.GetUserRequest,
-) (*pb.GetUserResponse, error) {
+func (s *GRPCServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
 	user, err := s.UserRepository.GetUserByID(ctx, req.GetUserId())
 	if err != nil {
 		if err == sql.ErrNoRows {

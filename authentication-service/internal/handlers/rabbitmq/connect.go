@@ -21,10 +21,7 @@ type RabbitConn struct {
 }
 
 func NewRabbitConn(config pkg.Config, tokenMaker pkg.JWTMaker) *RabbitConn {
-	rabbit := &RabbitConn{
-		Config: config,
-		Maker:  tokenMaker,
-	}
+	rabbit := &RabbitConn{Config: config, Maker: tokenMaker}
 
 	return rabbit
 }

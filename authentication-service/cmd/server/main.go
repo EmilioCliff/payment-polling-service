@@ -35,6 +35,17 @@ func main() {
 	grpcServer := Grpc.NewGRPCServer(config, *maker)
 	grpcServer.UserRepository = userRepository
 
+	rabbitConn := rabbitmq.NewRabbitConn(config, *maker)
+	rabbitConn.UserRepository = userRepository
+
+	// connects to rabbitmq
+	if err = rabbitConn.ConnectToRabbit(); err != nil {
+		log.Fatalf("Failed to create new rabbit conn: %v", err)
+	}
+
+	httpServer := http.NewHTTPServer(config, *maker)
+	httpServer.UserRepository = userRepository
+
 	go func() {
 		log.Printf("Starting Authentication Grpc Server on port: %s", config.GRPC_PORT)
 
@@ -42,13 +53,6 @@ func main() {
 			log.Fatalf("Failed to create new gRPC server instance: %v", err)
 		}
 	}()
-
-	rabbitConn := rabbitmq.NewRabbitConn(config, *maker)
-	rabbitConn.UserRepository = userRepository
-
-	if err = rabbitConn.ConnectToRabbit(); err != nil {
-		log.Fatalf("Failed to create new rabbit conn: %v", err)
-	}
 
 	go func() {
 		log.Println("Starting Authentication Rabbit Consumer...")
@@ -61,9 +65,6 @@ func main() {
 			log.Fatalf("Failed to create new rabbit conn: %v", err)
 		}
 	}()
-
-	httpServer := http.NewHTTPServer(config, *maker)
-	httpServer.UserRepository = userRepository
 
 	log.Printf("Starting Authentication Http Server on port: %s", config.HTTP_PORT)
 

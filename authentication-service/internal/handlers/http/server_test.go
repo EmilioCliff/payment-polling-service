@@ -26,13 +26,10 @@ func NewTestHTTPServer() *TestHTTPServer {
 	publicKey := &privateKey.PublicKey
 
 	s := &TestHTTPServer{
-		server: NewHTTPServer(pkg.Config{
-			HTTP_PORT:      "0.0.0.0:5050",
-			TOKEN_DURATION: time.Second,
-		}, pkg.JWTMaker{
-			PublicKey:  publicKey,
-			PrivateKey: privateKey,
-		}),
+		server: NewHTTPServer(
+			pkg.Config{HTTP_PORT: "0.0.0.0:5050", TOKEN_DURATION: time.Second},
+			pkg.JWTMaker{PublicKey: publicKey, PrivateKey: privateKey},
+		),
 	}
 
 	s.server.UserRepository = &s.UserRepository

@@ -41,7 +41,7 @@ func TestEncryptor(t *testing.T) {
 
 				return ciphertext
 			},
-			decryptWord: func(t *testing.T, cipherText string, word string, key string) {
+			decryptWord: func(t *testing.T, cipherText string, _ string, key string) {
 				decrypted, err := Decrypt(cipherText, []byte(key))
 				require.Error(t, err)
 				require.Empty(t, decrypted)
@@ -53,7 +53,7 @@ func TestEncryptor(t *testing.T) {
 			encryptWord: func(_ *testing.T, _ string, _ string) string {
 				return ""
 			},
-			decryptWord: func(t *testing.T, cipherText string, word string, key string) {
+			decryptWord: func(t *testing.T, cipherText string, _ string, key string) {
 				decrypted, err := Decrypt(cipherText, []byte(key))
 				require.Error(t, err)
 				require.Empty(t, decrypted)
@@ -65,7 +65,7 @@ func TestEncryptor(t *testing.T) {
 			encryptWord: func(_ *testing.T, _ string, _ string) string {
 				return "INVALID_CIPHERTEXT"
 			},
-			decryptWord: func(t *testing.T, cipherText string, word string, key string) {
+			decryptWord: func(t *testing.T, cipherText string, _ string, key string) {
 				decrypted, err := Decrypt(cipherText, []byte(key))
 				require.Error(t, err)
 				require.Empty(t, decrypted)

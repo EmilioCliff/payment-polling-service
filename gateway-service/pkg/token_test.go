@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
 	"time"
 
@@ -104,8 +106,15 @@ func TestTokenFunc(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			maker, err := NewJWTMaker("./my_rsa_key", "./my_rsa_key.pub.pem")
+			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 			require.NoError(t, err)
+
+			publicKey := &privateKey.PublicKey
+
+			maker := &JWTMaker{
+				PrivateKey: privateKey,
+				PublicKey:  publicKey,
+			}
 
 			tc.runTest(maker, t)
 		})

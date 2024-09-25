@@ -13,5 +13,5 @@ type RabbitInterface interface {
 	InitiatePaymentViaRabbit(InitiatePaymentRequest) (int, gin.H)
 	PollTransactionViaRabbit(PollingTransactionRequest) (int, gin.H)
 
-	SetConsumer(topics []string) error
+	SetConsumer([]string, chan struct{}) error
 }

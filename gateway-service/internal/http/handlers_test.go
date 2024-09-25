@@ -8,20 +8,21 @@ import (
 	"testing"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+	"github.com/brianvoe/gofakeit"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
 func mockRegisterUserViagRPC(_ services.RegisterUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "user created succesfull"}
 }
 
 func mockRegisterUserViaHttp(_ services.RegisterUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "user created succesfull"}
 }
 
 func mockRegisterUserViaRabbit(_ services.RegisterUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "user created succesfull"}
 }
 
 func TestHttpServer_handleRegisterUser(t *testing.T) {
@@ -30,27 +31,21 @@ func TestHttpServer_handleRegisterUser(t *testing.T) {
 	// change here to the communication channel you are using
 	s.GrpcService.RegisterUserViagRPCFunc = mockRegisterUserViagRPC
 
-	tests := []struct{
+	req := randomReq()
+
+	tests := []struct {
 		name string
-		req any
+		req  any
 		want int
 	}{
 		{
 			name: "success",
-			req: services.RegisterUserRequest{
-				FullName: "Jane",
-				Email: "jane@gmail.com",
-				Password: "password",
-				PaydUsername: "username",
-				UsernameApiKey: "user_key",
-				PasswordApiKey: "pass_key",
-				PaydAccountID: "account_id",
-			},
+			req:  req,
 			want: http.StatusOK,
 		},
 		{
 			name: "missing arg",
-			req: services.LoginUserRequest{},
+			req:  services.LoginUserRequest{},
 			want: http.StatusBadRequest,
 		},
 	}
@@ -62,26 +57,25 @@ func TestHttpServer_handleRegisterUser(t *testing.T) {
 			b, err := json.Marshal(tc.req)
 			require.NoError(t, err)
 
-			req, err := http.NewRequest("POST", "/register", bytes.NewBuffer(b))
+			req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(b))
 			require.NoError(t, err)
-		
+
 			s.server.router.ServeHTTP(w, req)
 			require.Equal(t, tc.want, w.Code)
 		})
 	}
 }
 
-
 func mockLoginUserViagRPC(_ services.LoginUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "user logged in successful"}
 }
 
 func mockLoginUserViaHttp(_ services.LoginUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "user logged in successful"}
 }
 
 func mockLoginUserViaRabbit(_ services.LoginUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "user logged in successful"}
 }
 
 func TestHttpServer_handleLoginUser(t *testing.T) {
@@ -90,22 +84,24 @@ func TestHttpServer_handleLoginUser(t *testing.T) {
 	// change here to the communication channel you are using
 	s.HTTPService.LoginUserViaHttpFunc = mockLoginUserViaHttp
 
-	tests := []struct{
+	req := services.LoginUserRequest{
+		Email:    gofakeit.Email(),
+		Password: gofakeit.Password(true, true, true, true, true, 7),
+	}
+
+	tests := []struct {
 		name string
-		req any
+		req  any
 		want int
 	}{
 		{
 			name: "success",
-			req: services.LoginUserRequest{
-				Email: "jane@gmail.com",
-				Password: "password",
-			},
+			req:  req,
 			want: http.StatusOK,
 		},
 		{
 			name: "missing arg",
-			req: services.RegisterUserRequest{},
+			req:  services.RegisterUserRequest{},
 			want: http.StatusBadRequest,
 		},
 	}
@@ -119,16 +115,15 @@ func TestHttpServer_handleLoginUser(t *testing.T) {
 
 			req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(b))
 			require.NoError(t, err)
-		
+
 			s.server.router.ServeHTTP(w, req)
 			require.Equal(t, tc.want, w.Code)
 		})
 	}
 }
 
-
 func mockInitiatePaymentViaRabbit(_ services.InitiatePaymentRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+	return http.StatusOK, gin.H{"message": "payment initiated successfully"}
 }
 
 func TestHttpServer_handleInitiatePayment(t *testing.T) {
@@ -137,26 +132,26 @@ func TestHttpServer_handleInitiatePayment(t *testing.T) {
 	// change here to the communication channel you are using
 	s.RabbitService.InitiatePaymentViaRabbitFunc = mockInitiatePaymentViaRabbit
 
-	tests := []struct{
+	tests := []struct {
 		name string
-		req any
+		req  any
 		want int
 	}{
 		{
 			name: "success",
 			req: services.InitiatePaymentRequest{
-				UserID     : 1,
-				Action     : "withdrawal",
-				Amount     : 200,
+				UserID:      1,
+				Action:      "withdrawal",
+				Amount:      200,
 				PhoneNumber: "phone_number",
 				NetworkCode: "network",
-				Naration: "narration",
+				Naration:    "narration",
 			},
 			want: http.StatusOK,
 		},
 		{
 			name: "missing arg",
-			req: services.RegisterUserRequest{},
+			req:  services.RegisterUserRequest{},
 			want: http.StatusBadRequest,
 		},
 	}
@@ -168,9 +163,9 @@ func TestHttpServer_handleInitiatePayment(t *testing.T) {
 			b, err := json.Marshal(tc.req)
 			require.NoError(t, err)
 
-			req, err := http.NewRequest("POST", "/payments/initiate", bytes.NewBuffer(b))
+			req, err := http.NewRequest(http.MethodPost, "/payments/initiate", bytes.NewBuffer(b))
 			require.NoError(t, err)
-		
+
 			s.server.router.ServeHTTP(w, req)
 			require.Equal(t, tc.want, w.Code)
 		})
@@ -183,7 +178,8 @@ func mockPollTransactionViaRabbit(req services.PollingTransactionRequest) (int, 
 			"error": "Bad Gateway",
 		}
 	}
-	return http.StatusOK, gin.H{"message": "just for coverage"}
+
+	return http.StatusOK, gin.H{"message": "transaction request processed"}
 }
 
 func TestHttpServer_handlePaymentPolling(t *testing.T) {
@@ -192,7 +188,7 @@ func TestHttpServer_handlePaymentPolling(t *testing.T) {
 	// change here to the communication channel you are using
 	s.RabbitService.PollTransactionViaRabbitFunc = mockPollTransactionViaRabbit
 
-	tests := []struct{
+	tests := []struct {
 		name string
 		path string
 		want int
@@ -208,9 +204,9 @@ func TestHttpServer_handlePaymentPolling(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 
-			req, err := http.NewRequest("GET", tc.path, nil)
+			req, err := http.NewRequest(http.MethodGet, tc.path, nil)
 			require.NoError(t, err)
-		
+
 			s.server.router.ServeHTTP(w, req)
 			require.Equal(t, tc.want, w.Code)
 		})

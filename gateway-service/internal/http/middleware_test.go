@@ -14,8 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func addAuthorization(t *testing.T, req *http.Request, tokenMaker pkg.JWTMaker, authorizationType string, username string, duration time.Duration) {
-
+func addAuthorization(
+	t *testing.T,
+	req *http.Request,
+	tokenMaker pkg.JWTMaker,
+	authorizationType string,
+	username string,
+	duration time.Duration,
+) {
 	token, err := tokenMaker.CreateToken(username, duration)
 	require.NoError(t, err)
 
@@ -40,7 +46,7 @@ func TestAuthenticationMiddleware(t *testing.T) {
 		},
 		{
 			name: "missing_authorization_header",
-			setAuthorization: func(req *http.Request, t *testing.T, tokenMaker pkg.JWTMaker) {
+			setAuthorization: func(_ *http.Request, _ *testing.T, _ pkg.JWTMaker) {
 			},
 			checkResponse: func(t *testing.T, recorder httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -78,27 +84,31 @@ func TestAuthenticationMiddleware(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			panic(err)
-		}
+			if err != nil {
+				panic(err)
+			}
 
-		publicKey := &privateKey.PublicKey
+			publicKey := &privateKey.PublicKey
 
-		testServer := NewHttpServer(pkg.JWTMaker{
-			PublicKey: publicKey,
-			PrivateKey: privateKey,
-		})
-		testServer.router.GET("/test-auth", authenticationMiddleware(testServer.maker), func(ctx *gin.Context) {
-			ctx.JSON(http.StatusOK, gin.H{})
-		})
+			testServer := NewHttpServer(pkg.JWTMaker{
+				PublicKey:  publicKey,
+				PrivateKey: privateKey,
+			})
+			testServer.router.GET(
+				"/test-auth",
+				authenticationMiddleware(testServer.maker),
+				func(ctx *gin.Context) {
+					ctx.JSON(http.StatusOK, gin.H{})
+				},
+			)
 
-		recorder := httptest.NewRecorder()
-		request, err := http.NewRequest("GET", "/test-auth", nil)
-		require.NoError(t, err)
+			recorder := httptest.NewRecorder()
+			request, err := http.NewRequest(http.MethodGet, "/test-auth", nil)
+			require.NoError(t, err)
 
-		tc.setAuthorization(request, t, testServer.maker)
-		testServer.router.ServeHTTP(recorder, request)
-		tc.checkResponse(t, *recorder)
+			tc.setAuthorization(request, t, testServer.maker)
+			testServer.router.ServeHTTP(recorder, request)
+			tc.checkResponse(t, *recorder)
 		})
 	}
 }

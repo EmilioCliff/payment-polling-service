@@ -1,3 +1,5 @@
+SERVICE=authentication-service
+
 createMigrate:
 	migrate create -ext sql -dir db/migrations -seq init_schema
 
@@ -14,16 +16,22 @@ mock:
 	mockgen -package mockdb -destination ./internal/postgres/mock/store.go github.com/EmilioCliff/payment-polling-app/authentication-service/internal/postgres/generated Querier
 
 test:
+	@echo "Running tests for $(SERVICE)..."
+
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out 
 	go tool cover -html=coverage.out -o coverage.html
 
 race-test:
-	go test -race -coverprofile=coverage.out ./...
+	@echo "Running race-tests for $(SERVICE)..."
+
+	go test -v -race -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 	go tool cover -html=coverage.out -o coverage.html
 
 revive:
+	@echo "Running revive for $(SERVICE)..."
+
 	revive -formatter friendly ./...
 
 .PHONY: createMigrate migrateup migratedown sqlc mock test race-test revive

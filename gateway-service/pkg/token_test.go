@@ -44,7 +44,6 @@ func TestTokenFunc(t *testing.T) {
 
 				payload, err := maker.VerifyToken(token)
 				require.Error(t, err)
-				// require.EqualError(t, err, ErrTokenExpired.Error())
 				require.Nil(t, payload)
 			},
 		},
@@ -71,7 +70,6 @@ func TestTokenFunc(t *testing.T) {
 
 				payload, err := maker.VerifyToken(token)
 				require.Error(t, err)
-				// require.EqualError(t, err, ErrInvalidToken.Error())
 				require.Nil(t, payload)
 			},
 		},

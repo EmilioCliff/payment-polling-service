@@ -22,9 +22,13 @@ func (s *HttpServer) handleRegisterUser(ctx *gin.Context) {
 	var req services.RegisterUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+
 		return
 	}
 
+	// we can change the communication channel here ie
+	// statusCode, rsp := s.RabbitService.RegisterUserViaRabbit(req)
+	// statusCode, rsp := s.HTTPService.RegisterUserViaHttp(req)
 	statusCode, rsp := s.GRPCService.RegisterUserViagRPC(req)
 	ctx.JSON(statusCode, rsp)
 }
@@ -42,10 +46,13 @@ func (s *HttpServer) handleLoginUser(ctx *gin.Context) {
 	var req services.LoginUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+
 		return
 	}
 
+	// we can change the communication channel here ie
 	// statusCode, rsp := s.GrpcClient.LoginUserViagRPC(req)
+	// statuSCode, rsp := s.RabbitService.LoginUserViaRabbit(req)
 	statusCode, rsp := s.HTTPService.LoginUserViaHttp(req)
 	ctx.JSON(statusCode, rsp)
 }
@@ -63,9 +70,11 @@ func (s *HttpServer) handleInitiatePayment(ctx *gin.Context) {
 	var req services.InitiatePaymentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+
 		return
 	}
 
+	// implemented only RabbitMQ communication channel with payment service.
 	statusCode, rsp := s.RabbitService.InitiatePaymentViaRabbit(req)
 	ctx.JSON(statusCode, rsp)
 }
@@ -83,9 +92,11 @@ func (s *HttpServer) handlePaymentPolling(ctx *gin.Context) {
 	var req services.PollingTransactionRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, pkg.ErrorResponse(err, "Invalid request"))
+
 		return
 	}
 
+	// implemented only RabbitMQ communication channel with payment service.
 	statusCode, rsp := s.RabbitService.PollTransactionViaRabbit(req)
 	ctx.JSON(statusCode, rsp)
 }

@@ -48,7 +48,10 @@ func NewRabbitConn() (*RabbitConn, error) {
 		return nil, err
 	}
 
-	gRPCconn, err := grpc.NewClient(config.AUTH_GRPC_URL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	gRPCconn, err := grpc.NewClient(
+		config.AUTH_GRPC_URL,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -210,15 +213,24 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 func (r *RabbitConn) distributeTask(payload Payload) []byte {
 	switch payload.Name {
 	case "initiate_payment":
+		// use reflect
+
+		// if nn, ok := payload.Data.(initiatePaymentRequest); ok {
+		// 	nn.
+		// }
 		dataBytes, err := json.Marshal(payload.Data)
 		if err != nil {
-			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err))
+			return r.errorRabbitMQResponse(
+				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err),
+			)
 		}
 
 		var initiatePaymentPayload initiatePaymentRequest
 		err = json.Unmarshal(dataBytes, &initiatePaymentPayload)
 		if err != nil {
-			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err))
+			return r.errorRabbitMQResponse(
+				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err),
+			)
 		}
 
 		return r.handleInitiatePayment(initiatePaymentPayload)
@@ -226,13 +238,17 @@ func (r *RabbitConn) distributeTask(payload Payload) []byte {
 	case "polling_transaction":
 		dataBytes, err := json.Marshal(payload.Data)
 		if err != nil {
-			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err))
+			return r.errorRabbitMQResponse(
+				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err),
+			)
 		}
 
 		var pollingTransactionPayload postgres.PollingTransactionRequest
 		err = json.Unmarshal(dataBytes, &pollingTransactionPayload)
 		if err != nil {
-			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err))
+			return r.errorRabbitMQResponse(
+				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err),
+			)
 		}
 
 		return r.handlePollingTransaction(pollingTransactionPayload)

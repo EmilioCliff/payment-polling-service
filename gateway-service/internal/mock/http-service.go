@@ -8,8 +8,8 @@ import (
 var _ services.HttpInterface = (*MockHttpService)(nil)
 
 type MockHttpService struct {
-	RegisterUserViaHttpFunc func (services.RegisterUserRequest) (int, gin.H)
-	LoginUserViaHttpFunc func (services.LoginUserRequest) (int, gin.H)
+	RegisterUserViaHttpFunc func(services.RegisterUserRequest) (int, gin.H)
+	LoginUserViaHttpFunc    func(services.LoginUserRequest) (int, gin.H)
 }
 
 func (m *MockHttpService) RegisterUserViaHttp(req services.RegisterUserRequest) (int, gin.H) {

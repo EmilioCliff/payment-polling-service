@@ -25,6 +25,7 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 	}
 
 	correlationID := uuid.New().String()
+
 	responseChannel := make(chan amqp.Delivery, 1)
 	defer close(responseChannel)
 
@@ -46,7 +47,10 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 			Body:          payloadRabitData,
 		})
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "error communicating to the authentication service via rabbitmq")
+		return http.StatusInternalServerError, pkg.ErrorResponse(
+			err,
+			"error communicating to the authentication service via rabbitmq",
+		)
 	}
 
 	select {
@@ -56,7 +60,7 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 
 			err := json.Unmarshal(msg.Body, &authResp)
 			if err != nil {
-				return http.StatusInternalServerError, gin.H{"error": "Failed to parse response"}
+				return http.StatusInternalServerError, gin.H{"error": "failed to parse response"}
 			}
 
 			if authResp.Message != "" {
@@ -66,11 +70,12 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 			return http.StatusOK, gin.H{"response": authResp}
 		}
 	case <-time.After(5 * time.Second):
-		return http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"}
+		return http.StatusRequestTimeout, gin.H{"error": "timeout waiting for response"}
 	}
 
 	return http.StatusInternalServerError, gin.H{"error": "unknown error"}
 }
+
 func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, gin.H) {
 	payload := services.Payload{
 		Name: "login_user",
@@ -83,6 +88,7 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 	}
 
 	correlationID := uuid.New().String()
+
 	responseChannel := make(chan amqp.Delivery, 1)
 	defer close(responseChannel)
 
@@ -104,7 +110,10 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 			Body:          payloadRabitData,
 		})
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "error communicating to the authentication service via rabbitmq")
+		return http.StatusInternalServerError, pkg.ErrorResponse(
+			err,
+			"error communicating to the authentication service via rabbitmq",
+		)
 	}
 
 	select {
@@ -125,7 +134,7 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 		}
 
 	case <-time.After(5 * time.Second):
-		return http.StatusRequestTimeout, gin.H{"error": "Timeout waiting for response"}
+		return http.StatusRequestTimeout, gin.H{"error": "timeout waiting for response"}
 	}
 
 	return http.StatusInternalServerError, gin.H{"error": "unknown error"}

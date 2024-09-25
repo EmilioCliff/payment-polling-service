@@ -5,16 +5,15 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/gin-gonic/gin"
-
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type HttpServer struct {
 	router *gin.Engine
-	maker pkg.JWTMaker
+	maker  pkg.JWTMaker
 
-	HTTPService services.HttpInterface
+	HTTPService   services.HttpInterface
 	RabbitService services.RabbitInterface
 	GRPCService   services.GrpcInterface
 }

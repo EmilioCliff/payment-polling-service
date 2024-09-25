@@ -10,18 +10,18 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
+	"github.com/brianvoe/gofakeit"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	TestTime = time.Date(2024, time.September, 18, 12, 0, 0, 0, time.UTC)
-)
+var TestTime = time.Date(2024, time.September, 18, 12, 0, 0, 0, time.UTC)
 
 func TestHTTPService_RegisterUserViaHttp(t *testing.T) {
+	// creates test server to handle register request.
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		
+
 		if r.URL.Path == "/auth/register" && r.Method == http.MethodPost {
 			var req services.RegisterUserRequest
 
@@ -29,7 +29,7 @@ func TestHTTPService_RegisterUserViaHttp(t *testing.T) {
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(services.RegisterUserResponse{
-					Message: "fail",
+					Message:    "fail",
 					StatusCode: http.StatusInternalServerError,
 				})
 
@@ -39,19 +39,19 @@ func TestHTTPService_RegisterUserViaHttp(t *testing.T) {
 			if req.Email == "" {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(services.RegisterUserResponse{
-					Message: "missing values",
+					Message:    "missing values",
 					StatusCode: http.StatusBadRequest,
 				})
 
 				return
 			}
+
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(services.RegisterUserResponse{
-				FullName: req.FullName,
-				Email: req.Email,
+				FullName:  req.FullName,
+				Email:     req.Email,
 				CreatedAt: TestTime,
 			})
-
 		} else {
 			http.NotFound(w, r)
 		}
@@ -62,35 +62,29 @@ func TestHTTPService_RegisterUserViaHttp(t *testing.T) {
 		AUTH_HTTP_PORT: strings.TrimPrefix(testServer.URL, "http://"),
 	})
 
-	tests := []struct{
-		name string
-		req services.RegisterUserRequest
+	req := randomReq()
+
+	tests := []struct {
+		name           string
+		req            services.RegisterUserRequest
 		wantStatusCode int
-		wantRsp gin.H
+		wantRsp        gin.H
 	}{
 		{
-			name: "success",
-			req: services.RegisterUserRequest{
-				FullName: "Jane",
-				Email: "jane@gmail.com",
-				Password: "secret",
-				PaydUsername: "username",
-				UsernameApiKey: "user_key",
-				PasswordApiKey: "pass_key",
-				PaydAccountID: "account_id",
-			},
+			name:           "success",
+			req:            req,
 			wantStatusCode: http.StatusOK,
 			wantRsp: gin.H{"response": services.RegisterUserResponse{
-				FullName: "Jane",
-				Email: "jane@gmail.com",
+				FullName:  req.FullName,
+				Email:     req.Email,
 				CreatedAt: TestTime,
 			}},
 		},
 		{
-			name: "failed request",
-			req: services.RegisterUserRequest{},
+			name:           "failed request",
+			req:            services.RegisterUserRequest{},
 			wantStatusCode: http.StatusBadRequest,
-			wantRsp: gin.H{"message": "Failed to register new user", "error": "missing values"},
+			wantRsp:        gin.H{"message": "Failed to register new user", "error": "missing values"},
 		},
 	}
 
@@ -104,6 +98,7 @@ func TestHTTPService_RegisterUserViaHttp(t *testing.T) {
 }
 
 func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
+	// creates test server to handle login request
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -114,7 +109,7 @@ func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(services.LoginUserResponse{
-					Message: "fail",
+					Message:    "fail",
 					StatusCode: http.StatusInternalServerError,
 				})
 
@@ -124,16 +119,16 @@ func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
 			if req.Password == "test_fail" {
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(services.LoginUserResponse{
-					Message: "fail",
+					Message:    "fail",
 					StatusCode: http.StatusUnauthorized,
 				})
 			} else {
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(services.LoginUserResponse{
 					AccessToken: "token",
-					FullName: "jane doe",
-					Email:  req.Email,
-					CreatedAt: TestTime,
+					FullName:    "jane doe",
+					Email:       req.Email,
+					CreatedAt:   TestTime,
 				})
 			}
 		} else {
@@ -146,34 +141,36 @@ func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
 		AUTH_HTTP_PORT: strings.TrimPrefix(testServer.URL, "http://"),
 	})
 
-	tests := []struct{
-		name string
-		req services.LoginUserRequest
+	req := services.LoginUserRequest{
+		Email:    gofakeit.Email(),
+		Password: gofakeit.Password(true, true, true, true, true, 7),
+	}
+
+	tests := []struct {
+		name           string
+		req            services.LoginUserRequest
 		wantStatusCode int
-		wantRsp gin.H
+		wantRsp        gin.H
 	}{
 		{
-			name: "success",
-			req: services.LoginUserRequest{
-				Email: "jane@gmail.com",
-				Password: "secret",
-			},
+			name:           "success",
+			req:            req,
 			wantStatusCode: http.StatusOK,
 			wantRsp: gin.H{"response": services.LoginUserResponse{
 				AccessToken: "token",
-				FullName: "jane doe",
-				Email: "jane@gmail.com",
-				CreatedAt: TestTime,
+				FullName:    "jane doe",
+				Email:       req.Email,
+				CreatedAt:   TestTime,
 			}},
 		},
 		{
 			name: "failed request",
 			req: services.LoginUserRequest{
-				Email: "jane@gmail.com",
+				Email:    req.Email,
 				Password: "test_fail",
 			},
 			wantStatusCode: http.StatusUnauthorized,
-			wantRsp: gin.H{"message": "Failed to login user", "error": "fail"},
+			wantRsp:        gin.H{"message": "Failed to login user", "error": "fail"},
 		},
 	}
 
@@ -183,5 +180,17 @@ func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
 			require.Equal(t, statusCode, tc.wantStatusCode)
 			require.Equal(t, msg, tc.wantRsp)
 		})
+	}
+}
+
+func randomReq() services.RegisterUserRequest {
+	return services.RegisterUserRequest{
+		FullName:       gofakeit.Name(),
+		Email:          gofakeit.Email(),
+		Password:       gofakeit.Password(true, true, true, true, true, 7),
+		PaydUsername:   gofakeit.Username(),
+		PaydAccountID:  gofakeit.UUID(),
+		UsernameApiKey: gofakeit.UUID(),
+		PasswordApiKey: gofakeit.UUID(),
 	}
 }

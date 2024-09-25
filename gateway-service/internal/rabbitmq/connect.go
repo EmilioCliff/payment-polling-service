@@ -2,7 +2,9 @@ package rabbitmq
 
 import (
 	"log"
+	"math"
 	"sync"
+	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
@@ -15,6 +17,7 @@ type RabbitHandler struct {
 	Channel *amqp.Channel
 	RspMap  *responseMap
 	config  pkg.Config
+	forever chan bool
 }
 
 type responseMap struct {
@@ -22,21 +25,53 @@ type responseMap struct {
 	data map[string]chan amqp.Delivery
 }
 
-func NewRabbitHandler(channel *amqp.Channel, config pkg.Config) *RabbitHandler {
+func NewRabbitService(channel *amqp.Channel, config pkg.Config) *RabbitHandler {
 	return &RabbitHandler{
-		RspMap:  NewResponseMap(),
+		RspMap:  newResponseMap(),
 		config:  config,
 		Channel: channel,
 	}
 }
 
-func NewResponseMap() *responseMap {
+func newResponseMap() *responseMap {
 	return &responseMap{
 		data: make(map[string]chan amqp.Delivery),
 	}
 }
 
-func (r *RabbitHandler) SetConsumer(topics []string) error {
+func ConnectToRabit(uri string) (*amqp.Connection, error) {
+	count := 0
+	maxRetries := 12
+
+	var err error
+
+	var connection *amqp.Connection
+
+	for {
+		connection, err = amqp.Dial(uri)
+		if err != nil {
+			log.Println("failed to connect to rabbitmq", err)
+
+			if count > maxRetries {
+				return nil, err
+			}
+
+			count++
+			rollOff := time.Duration(math.Pow(float64(count), 2)) * time.Second
+			time.Sleep(rollOff)
+
+			continue
+		}
+
+		log.Println("Connected to rabbitmq")
+
+		break
+	}
+
+	return connection, nil
+}
+
+func (r *RabbitHandler) SetConsumer(topics []string, readyChan chan struct{}) error {
 	q, err := r.Channel.QueueDeclare(
 		r.config.EXCLUSIVE_QUEUE_NAME, // name
 		false,                         // durable
@@ -62,33 +97,35 @@ func (r *RabbitHandler) SetConsumer(topics []string) error {
 	}
 
 	messages, err := r.Channel.Consume(
-		q.Name,            // queue
-		"gateway_service", // consumer
-		true,              // auto ack
-		false,             // exclusive
-		false,             // no local
-		false,             // no wait
-		nil,               // args
+		q.Name,                         // queue
+		r.config.GATEWAY_CONSUMER_NAME, // consumer
+		true,                           // auto ack
+		false,                          // exclusive
+		false,                          // no local
+		false,                          // no wait
+		nil,                            // args
 	)
 	if err != nil {
 		return err
 	}
 
-	forever := make(chan bool)
+	// Ensure that readyChan is closed after the consumer is successfully set up
+	readyChan <- struct{}{}
+
+	r.forever = make(chan bool)
 
 	go func() {
 		for msg := range messages {
 			if ch, ok := r.RspMap.Get(msg.CorrelationId); ok {
 				ch <- msg
-				log.Println("Message acknoledged from callback queue", msg.DeliveryTag)
-				// log.Println(msg)
+				log.Println("Message acknowledged from callback queue", msg.DeliveryTag)
 			}
 		}
 	}()
 
 	log.Println("listening to messages in gateway service")
 
-	<-forever
+	<-r.forever
 
 	return nil
 }
@@ -103,6 +140,7 @@ func (rm *responseMap) Get(correlationID string) (chan amqp.Delivery, bool) {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 	ch, exists := rm.data[correlationID]
+
 	return ch, exists
 }
 

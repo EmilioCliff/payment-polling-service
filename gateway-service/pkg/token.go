@@ -19,7 +19,7 @@ var (
 
 type Payload struct {
 	ID       uuid.UUID `json:"id"`
-	Username string    `json:"fullname"`
+	Username string    `json:"username"`
 	jwt.RegisteredClaims
 }
 
@@ -58,13 +58,13 @@ func NewJWTMaker(privateKeyPath string, publicKeyPath string) (*JWTMaker, error)
 }
 
 func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {
-	uuid, err := uuid.NewRandom()
+	uuidID, err := uuid.NewRandom()
 	if err != nil {
 		return "", fmt.Errorf("error generating token uuid")
 	}
 
 	claims := Payload{
-		uuid,
+		uuidID,
 		username,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
@@ -75,11 +75,12 @@ func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (str
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token, err := jwtToken.SignedString(maker.PrivateKey)
+
 	return token, err
 }
 
 func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
-	keyFunc := func(token *jwt.Token) (interface{}, error) {
+	keyFunc := func(token *jwt.Token) (any, error) {
 		_, ok := token.Method.(*jwt.SigningMethodRSA)
 		if !ok {
 			return nil, ErrInvalidToken
@@ -87,6 +88,7 @@ func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
 
 		return maker.PublicKey, nil
 	}
+
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFunc)
 	if err != nil {
 		return nil, err

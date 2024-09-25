@@ -23,17 +23,18 @@ func (g *GrpcClient) RegisterUserViagRPC(req services.RegisterUserRequest) (int,
 		PaydUsername:       req.PaydUsername,
 		PaydPasswordApiKey: req.PasswordApiKey,
 		PaydUsernameApiKey: req.UsernameApiKey,
-		PaydAccountId: req.PaydAccountID,
+		PaydAccountId:      req.PaydAccountID,
 	})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok {
 			grpcCode := st.Code()
 			grpcMessage := st.Message()
-			return g.grpcErrorResponse(grpcCode, grpcMessage)
-		} else {
-			return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
+
+			return grpcErrorResponse(grpcCode, grpcMessage)
 		}
+
+		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
 	}
 
 	return http.StatusOK, gin.H{"response": rsp}
@@ -52,10 +53,11 @@ func (g *GrpcClient) LoginUserViagRPC(req services.LoginUserRequest) (int, gin.H
 		if ok {
 			grpcCode := st.Code()
 			grpcMessage := st.Message()
-			return g.grpcErrorResponse(grpcCode, grpcMessage)
-		} else {
-			return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
+
+			return grpcErrorResponse(grpcCode, grpcMessage)
 		}
+
+		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
 	}
 
 	return http.StatusOK, gin.H{"response": rsp}

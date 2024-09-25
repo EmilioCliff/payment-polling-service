@@ -12,23 +12,24 @@ import (
 type TestHttpServer struct {
 	server *HttpServer
 
-	GrpcService mock.MockGrpcService
-	HTTPService mock.MockHttpService
+	GrpcService   mock.MockGrpcService
+	HTTPService   mock.MockHttpService
 	RabbitService mock.MockRabbitMQService
 }
 
 func NewTestHttpServer() *TestHttpServer {
 	gin.SetMode(gin.TestMode)
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-    if err != nil {
-        panic(err)
-    }
 
-    publicKey := &privateKey.PublicKey
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+
+	publicKey := &privateKey.PublicKey
 
 	s := &TestHttpServer{
 		server: NewHttpServer(pkg.JWTMaker{
-			PublicKey: publicKey,
+			PublicKey:  publicKey,
 			PrivateKey: privateKey,
 		}),
 	}

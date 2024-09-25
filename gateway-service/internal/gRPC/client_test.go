@@ -16,37 +16,38 @@ type TestGrpcClient struct {
 }
 
 func NewTestGrpcClient() *TestGrpcClient {
-
 	g := &TestGrpcClient{
-		client: NewGrpcClient(),
+		client: NewGrpcService(),
 	}
 
-	g.client.dialFunc = func(target string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-		if target == "INVALID_PORT" {return nil, errors.New("invalid port")}
+	// mock the dial function
+	g.client.dialFunc = func(target string, _ ...grpc.DialOption) (*grpc.ClientConn, error) {
+		if target == "INVALID_PORT" {
+			return nil, errors.New("invalid port")
+		}
+
 		return &grpc.ClientConn{}, nil
 	}
 
 	return g
 }
 
-
 func TestGrpcClient_Start(t *testing.T) {
-
 	g := NewTestGrpcClient()
 
-	tests := []struct{
-		name string
-		port string
+	tests := []struct {
+		name    string
+		port    string
 		wantErr bool
 	}{
 		{
-			name: "valid port",
-			port: "0.0.0.0:5050",
+			name:    "valid port",
+			port:    "0.0.0.0:5050",
 			wantErr: false,
 		},
 		{
-			name: "invalid port",
-			port: "INVALID_PORT",
+			name:    "invalid port",
+			port:    "INVALID_PORT",
 			wantErr: true,
 		},
 	}
@@ -54,7 +55,7 @@ func TestGrpcClient_Start(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			err := g.client.Start(tc.port)
-			if(err != nil) != tc.wantErr  {
+			if (err != nil) != tc.wantErr {
 				t.Errorf("Start() error = %v, wantErr %v", err, tc.wantErr)
 			}
 		})
@@ -62,62 +63,53 @@ func TestGrpcClient_Start(t *testing.T) {
 }
 
 func TestGrpcClient_grpcErrorResponse(t *testing.T) {
-	g := NewTestGrpcClient()
-
-	tests := []struct{
-		name string
-		code codes.Code
-		msg string
+	tests := []struct {
+		name           string
+		code           codes.Code
+		msg            string
 		wantStatusCode int
-		wantMessage string
 	}{
 		{
-			name: "internal error",
-			code: codes.Internal,
-			msg: "internal error",
+			name:           "internal error",
+			code:           codes.Internal,
+			msg:            "internal error",
 			wantStatusCode: http.StatusInternalServerError,
-			wantMessage: "internal error",
 		},
 		{
-			name: "not found",
-			code: codes.NotFound,
-			msg: "not found",
+			name:           "not found",
+			code:           codes.NotFound,
+			msg:            "not found",
 			wantStatusCode: http.StatusNotFound,
-			wantMessage: "not found",
 		},
 		{
-			name: "already exists",
-			code: codes.AlreadyExists,
-			msg: "already exists",
+			name:           "already exists",
+			code:           codes.AlreadyExists,
+			msg:            "already exists",
 			wantStatusCode: http.StatusForbidden,
-			wantMessage: "already exists",
 		},
 		{
-			name: "unathorized",
-			code: codes.Unauthenticated,
-			msg: "unathorized",
+			name:           "unathorized",
+			code:           codes.Unauthenticated,
+			msg:            "unathorized",
 			wantStatusCode: http.StatusUnauthorized,
-			wantMessage: "unathorized",
 		},
 		{
-			name: "permission denied",
-			code: codes.PermissionDenied,
-			msg: "permission denied",
+			name:           "permission denied",
+			code:           codes.PermissionDenied,
+			msg:            "permission denied",
 			wantStatusCode: http.StatusForbidden,
-			wantMessage: "permission denied",
 		},
 		{
-			name: "system error",
-			code: codes.ResourceExhausted, // any code
-			msg: "system error",
+			name:           "system error",
+			code:           codes.ResourceExhausted, // any code
+			msg:            "system error",
 			wantStatusCode: http.StatusInternalServerError,
-			wantMessage: "system error",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			statusCode, msg := g.client.grpcErrorResponse(tc.code, tc.msg)
+			statusCode, msg := grpcErrorResponse(tc.code, tc.msg)
 			require.Equal(t, statusCode, tc.wantStatusCode)
 			require.Equal(t, msg, gin.H{"message": tc.msg})
 		})

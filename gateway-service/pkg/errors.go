@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -20,11 +21,35 @@ type Error struct {
 	Message string
 }
 
-func Errorf(code string, format string, args ...interface{}) *Error {
+func Errorf(code string, format string, args ...any) *Error {
 	return &Error{
 		Code:    code,
 		Message: fmt.Sprintf(format, args...),
 	}
+}
+
+func ErrorCode(err error) string {
+	var e *Error
+
+	if err == nil {
+		return ""
+	} else if errors.As(err, &e) {
+		return e.Code
+	}
+
+	return INTERNAL_ERROR
+}
+
+func ErrorMessage(err error) string {
+	var e *Error
+
+	if err == nil {
+		return ""
+	} else if errors.As(err, &e) {
+		return e.Message
+	}
+
+	return "Internal error."
 }
 
 func ErrorResponse(err error, msg string) gin.H {
@@ -32,4 +57,9 @@ func ErrorResponse(err error, msg string) gin.H {
 		"message": msg,
 		"error":   err.Error(),
 	}
+}
+
+// Error implements the error interface. Not used by the application otherwise.
+func (e *Error) Error() string {
+	return fmt.Sprintf("error: code=%s message=%s", e.Code, e.Message)
 }

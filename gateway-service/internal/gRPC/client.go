@@ -13,6 +13,7 @@ import (
 
 var _ services.GrpcInterface = (*GrpcClient)(nil)
 
+// type for dialing grpc server implemented to allow mocking.
 type GrpcDialFunc func(target string, opts ...grpc.DialOption) (*grpc.ClientConn, error)
 
 type GrpcClient struct {
@@ -20,7 +21,7 @@ type GrpcClient struct {
 	dialFunc      GrpcDialFunc
 }
 
-func NewGrpcClient() *GrpcClient {
+func NewGrpcService() *GrpcClient {
 	return &GrpcClient{
 		dialFunc: grpc.NewClient,
 	}
@@ -33,10 +34,11 @@ func (g *GrpcClient) Start(grpcPort string) error {
 	}
 
 	g.authgRPClient = pb.NewAuthenticationServiceClient(gRPCconn)
+
 	return nil
 }
 
-func (g *GrpcClient) grpcErrorResponse(code codes.Code, msg string) (int, gin.H) {
+func grpcErrorResponse(code codes.Code, msg string) (int, gin.H) {
 	switch code {
 	case codes.Internal:
 		return http.StatusInternalServerError, gin.H{

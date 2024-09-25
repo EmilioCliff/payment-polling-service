@@ -24,4 +24,4 @@ jobs:
       - name: Run tests
         run: |
           cd ${{ matrix.service }}
-          make test
+          make race-test

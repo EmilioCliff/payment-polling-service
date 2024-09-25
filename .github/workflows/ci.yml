@@ -10,6 +10,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [authentication-service, gateway-service]
     steps:
       - uses: actions/checkout@v4
 
@@ -18,22 +21,7 @@ jobs:
         with:
           go-version: "1.20"
 
-      - name: Get changed directories
-        id: changes
+      - name: Run tests
         run: |
-          # Find which directories have changes
-          git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} | cut -d'/' -f1 | sort -u > changed_dirs.txt
-          echo "Changed directories:"
-          cat changed_dirs.txt
-
-      - name: Run tests for changed services
-        run: |
-          # Read the list of changed directories and run tests for each service
-          while read dir; do
-              if [[ -d "$dir" ]]; then
-              echo "Running tests in $dir"
-              cd $dir
-              make test || exit 1
-              cd -
-              fi
-          done < changed_dirs.txt
+          cd ${{ matrix.service }}
+          make test

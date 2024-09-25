@@ -87,6 +87,8 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 			time.Sleep(tc.sleep)
 
 			var i int
+
+			testRabbit.rabbit.RspMap.mu.RLock()
 			for correlationID, responseChannel := range testRabbit.rabbit.RspMap.data {
 				if i == index {
 					log.Printf("CorrelationID for test case '%s': %s", tc.name, correlationID)
@@ -96,6 +98,7 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 
 				i++
 			}
+			testRabbit.rabbit.RspMap.mu.RUnlock()
 
 			code := <-statusCodeChan
 			msg := <-msgChan
@@ -181,6 +184,8 @@ func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
 			time.Sleep(tc.sleep)
 
 			var i int
+
+			testRabbit.rabbit.RspMap.mu.RLock()
 			for correlationID, responseChannel := range testRabbit.rabbit.RspMap.data {
 				if i == index {
 					log.Printf("CorrelationID for test case '%s': %s", tc.name, correlationID)
@@ -190,6 +195,7 @@ func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
 
 				i++
 			}
+			testRabbit.rabbit.RspMap.mu.RUnlock()
 
 			code := <-statusCodeChan
 			msg := <-msgChan

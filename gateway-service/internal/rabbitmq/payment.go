@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, gin.H) {
+func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, services.InitiatePaymentResponse) {
 	payload := services.Payload{
 		Name: "initiate_payment",
 		Data: req,
@@ -21,7 +19,7 @@ func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentReq
 
 	payloadRabitData, err := json.Marshal(payload)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+		return http.StatusInternalServerError, services.InitiatePaymentResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	correlationID := uuid.New().String()
@@ -47,10 +45,7 @@ func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentReq
 			Body:          payloadRabitData,
 		})
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"error communicating to the payment service via rabbitmq",
-		)
+		return http.StatusInternalServerError, services.InitiatePaymentResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	select {
@@ -60,27 +55,33 @@ func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentReq
 
 			err := json.Unmarshal(msg.Body, &paymentResp)
 			if err != nil {
-				return http.StatusInternalServerError, pkg.ErrorResponse(err, "error unmarshalling response")
+				return http.StatusInternalServerError, services.InitiatePaymentResponse{
+					Message:    "internal error",
+					StatusCode: http.StatusInternalServerError,
+				}
 			}
 
 			if paymentResp.Message != "" {
-				return paymentResp.StatusCode, gin.H{"error": paymentResp.Message}
+				return paymentResp.StatusCode, services.InitiatePaymentResponse{Message: paymentResp.Message, StatusCode: paymentResp.StatusCode}
 			}
 
-			return http.StatusOK, gin.H{"response": paymentResp}
+			return http.StatusOK, paymentResp
 		}
 	case <-time.After(5 * time.Second):
-		return http.StatusRequestTimeout, gin.H{"error": "timeout waiting for response"}
+		return http.StatusRequestTimeout, services.InitiatePaymentResponse{
+			Message:    "timeout waiting for response. Try again",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	return http.StatusInternalServerError, gin.H{"error": "unknown error"}
+	return http.StatusInternalServerError, services.InitiatePaymentResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 }
 
 type pollingTransactionRabbitRequest struct {
 	TransactionId string `json:"transaction_id"`
 }
 
-func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, gin.H) {
+func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, services.PollingTransactionResponse) {
 	payload := services.Payload{
 		Name: "polling_transaction",
 		Data: pollingTransactionRabbitRequest{
@@ -90,7 +91,10 @@ func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransaction
 
 	payloadRabitData, err := json.Marshal(payload)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+		return http.StatusInternalServerError, services.PollingTransactionResponse{
+			Message:    "internal error",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
 	correlationID := uuid.New().String()
@@ -116,10 +120,10 @@ func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransaction
 			Body:          payloadRabitData,
 		})
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"error communicating to the payment service via rabbitmq",
-		)
+		return http.StatusInternalServerError, services.PollingTransactionResponse{
+			Message:    "internal error",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
 	select {
@@ -129,18 +133,24 @@ func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransaction
 
 			err := json.Unmarshal(msg.Body, &pollResp)
 			if err != nil {
-				return http.StatusInternalServerError, pkg.ErrorResponse(err, "error unmarshalling response")
+				return http.StatusInternalServerError, services.PollingTransactionResponse{
+					Message:    "internal error",
+					StatusCode: http.StatusInternalServerError,
+				}
 			}
 
 			if pollResp.Message != "" {
-				return pollResp.StatusCode, gin.H{"error": pollResp.Message}
+				return pollResp.StatusCode, services.PollingTransactionResponse{Message: pollResp.Message, StatusCode: pollResp.StatusCode}
 			}
 
-			return http.StatusOK, gin.H{"response": pollResp}
+			return http.StatusOK, pollResp
 		}
 	case <-time.After(5 * time.Second):
-		return http.StatusRequestTimeout, gin.H{"error": "timeout waiting for response"}
+		return http.StatusRequestTimeout, services.PollingTransactionResponse{
+			Message:    "timeout waiting for response. Try again",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	return http.StatusInternalServerError, gin.H{"error": "unknown error"}
+	return http.StatusInternalServerError, services.PollingTransactionResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 }

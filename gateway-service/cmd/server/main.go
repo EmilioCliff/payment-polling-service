@@ -3,18 +3,13 @@ package main
 import (
 	"log"
 
-	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
+	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs/statik"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/gRPC"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/http"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/rabbitmq"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 )
 
-// @title Payment Polling App
-// @version 1.0
-// @description Payment Polling App is an online polling payment gateway service.
-
-// @host localhost:8080
 func main() {
 	config, err := pkg.LoadConfig(".")
 	if err != nil {

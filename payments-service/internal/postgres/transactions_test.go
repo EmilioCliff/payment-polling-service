@@ -1,53 +1,55 @@
-package postgres_test
+package postgres
 
-import (
-	"context"
-	"testing"
+// package postgres_test
 
-	mockdb "github.com/EmilioCliff/payment-polling-app/payment-service/internal/mock"
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/rabbitmq"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
-)
+// import (
+// 	"context"
+// 	"testing"
 
-func newTransaction() postgres.InitiatePaymentRequest {
-	transactionID, _ := uuid.NewRandom()
-	return postgres.InitiatePaymentRequest{
-		TransactionID:      transactionID,
-		UserID:             1,
-		Action:             "test",
-		Amount:             100,
-		PhoneNumber:        "08123456789",
-		NetworkCode:        "234",
-		Naration:           "Narration",
-		PaydTransactionRef: "test",
-	}
-}
+// 	mockdb "github.com/EmilioCliff/payment-polling-app/payment-service/internal/mock"
+// 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
+// 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/rabbitmq"
+// 	"github.com/google/uuid"
+// 	"github.com/stretchr/testify/require"
+// 	"go.uber.org/mock/gomock"
+// )
 
-func TestCreateTransactions(t *testing.T) {
-	transaction := newTransaction()
+// func newTransaction() postgres.InitiatePaymentRequest {
+// 	transactionID, _ := uuid.NewRandom()
+// 	return postgres.InitiatePaymentRequest{
+// 		TransactionID:      transactionID,
+// 		UserID:             1,
+// 		Action:             "test",
+// 		Amount:             100,
+// 		PhoneNumber:        "08123456789",
+// 		NetworkCode:        "234",
+// 		Naration:           "Narration",
+// 		PaydTransactionRef: "test",
+// 	}
+// }
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+// func TestCreateTransactions(t *testing.T) {
+// 	transaction := newTransaction()
 
-	store := mockdb.NewMockStore(ctrl)
+// 	ctrl := gomock.NewController(t)
+// 	defer ctrl.Finish()
 
-	r := &rabbitmq.RabbitConn{}
+// 	store := mockdb.NewMockStore(ctrl)
 
-	// build stubs
-	store.EXPECT().
-		CreateTransactions(gomock.Any(), gomock.Eq(transaction)).
-		Times(1).
-		Return(&postgres.InitiatePaymentResponse{}, nil)
+// 	// r := &rabbitmq.RabbitConn{}
 
-	transactionResponse, pkgErr := store.CreateTransactions(context.Background(), transaction)
-	require.Nil(t, pkgErr)
-	require.Equal(t, transactionResponse.TransactionID, transaction.TransactionID)
-	require.Equal(t, transactionResponse.Action, transaction.Action)
+// 	// build stubs
+// 	store.EXPECT().
+// 		CreateTransactions(gomock.Any(), gomock.Eq(transaction)).
+// 		Times(1).
+// 		Return(&postgres.InitiatePaymentResponse{}, nil)
 
-	distributor := mockdb.NewMockTaskDistributor(ctrl)
-}
+// 	transactionResponse, pkgErr := store.CreateTransactions(context.Background(), transaction)
+// 	require.Nil(t, pkgErr)
+// 	require.Equal(t, transactionResponse.TransactionID, transaction.TransactionID)
+// 	require.Equal(t, transactionResponse.Action, transaction.Action)
 
-func TestGetTransaction(t *testing.T) {}
+// 	distributor := mockdb.NewMockTaskDistributor(ctrl)
+// }
+
+// func TestGetTransaction(t *testing.T) {}

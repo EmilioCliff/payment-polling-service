@@ -3,8 +3,6 @@ package pkg
 import (
 	"errors"
 	"fmt"
-
-	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -52,11 +50,20 @@ func ErrorMessage(err error) string {
 	return "Internal error."
 }
 
-func ErrorResponse(err error, msg string) gin.H {
-	return gin.H{
-		"message": msg,
-		"error":   err.Error(),
+type APIError struct {
+	StatusCode int    `json:"status_code"`
+	Message    string `json:"message"`
+}
+
+func ErrorResponse(msg string, code int) APIError {
+	return APIError{
+		StatusCode: code,
+		Message:    msg,
 	}
+	// return gin.H{
+	// 	"message": msg,
+	// 	"error":   err.Error(),
+	// }
 }
 
 // Error implements the error interface. Not used by the application otherwise.

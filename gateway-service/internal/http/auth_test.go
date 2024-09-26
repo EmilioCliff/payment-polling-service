@@ -11,7 +11,6 @@ import (
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/brianvoe/gofakeit"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,23 +67,23 @@ func TestHTTPService_RegisterUserViaHttp(t *testing.T) {
 		name           string
 		req            services.RegisterUserRequest
 		wantStatusCode int
-		wantRsp        gin.H
+		wantRsp        services.RegisterUserResponse
 	}{
 		{
 			name:           "success",
 			req:            req,
 			wantStatusCode: http.StatusOK,
-			wantRsp: gin.H{"response": services.RegisterUserResponse{
+			wantRsp: services.RegisterUserResponse{
 				FullName:  req.FullName,
 				Email:     req.Email,
 				CreatedAt: TestTime,
-			}},
+			},
 		},
 		{
 			name:           "failed request",
 			req:            services.RegisterUserRequest{},
 			wantStatusCode: http.StatusBadRequest,
-			wantRsp:        gin.H{"message": "Failed to register new user", "error": "missing values"},
+			wantRsp:        services.RegisterUserResponse{Message: "missing values", StatusCode: http.StatusBadRequest},
 		},
 	}
 
@@ -150,18 +149,17 @@ func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
 		name           string
 		req            services.LoginUserRequest
 		wantStatusCode int
-		wantRsp        gin.H
+		wantRsp        services.LoginUserResponse
 	}{
 		{
 			name:           "success",
 			req:            req,
 			wantStatusCode: http.StatusOK,
-			wantRsp: gin.H{"response": services.LoginUserResponse{
+			wantRsp: services.LoginUserResponse{
 				AccessToken: "token",
 				FullName:    "jane doe",
 				Email:       req.Email,
-				CreatedAt:   TestTime,
-			}},
+				CreatedAt:   TestTime},
 		},
 		{
 			name: "failed request",
@@ -170,7 +168,7 @@ func TestHTTPServer_LoginUserViaHttp(t *testing.T) {
 				Password: "test_fail",
 			},
 			wantStatusCode: http.StatusUnauthorized,
-			wantRsp:        gin.H{"message": "Failed to login user", "error": "fail"},
+			wantRsp:        services.LoginUserResponse{Message: "fail", StatusCode: http.StatusUnauthorized},
 		},
 	}
 

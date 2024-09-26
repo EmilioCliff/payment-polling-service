@@ -2,33 +2,32 @@ package mock
 
 import (
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
-	"github.com/gin-gonic/gin"
 )
 
 var _ services.RabbitInterface = (*MockRabbitMQService)(nil)
 
 type MockRabbitMQService struct {
-	RegisterUserViaRabbitFunc    func(services.RegisterUserRequest) (int, gin.H)
-	LoginUserViaRabbitFunc       func(services.LoginUserRequest) (int, gin.H)
-	InitiatePaymentViaRabbitFunc func(services.InitiatePaymentRequest) (int, gin.H)
-	PollTransactionViaRabbitFunc func(services.PollingTransactionRequest) (int, gin.H)
+	RegisterUserViaRabbitFunc    func(services.RegisterUserRequest) (int, services.RegisterUserResponse)
+	LoginUserViaRabbitFunc       func(services.LoginUserRequest) (int, services.LoginUserResponse)
+	InitiatePaymentViaRabbitFunc func(services.InitiatePaymentRequest) (int, services.InitiatePaymentResponse)
+	PollTransactionViaRabbitFunc func(services.PollingTransactionRequest) (int, services.PollingTransactionResponse)
 
 	SetConsumerFunc func(topics []string) error
 }
 
-func (m *MockRabbitMQService) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, gin.H) {
+func (m *MockRabbitMQService) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, services.RegisterUserResponse) {
 	return m.RegisterUserViaRabbitFunc(req)
 }
 
-func (m *MockRabbitMQService) LoginUserViaRabbit(req services.LoginUserRequest) (int, gin.H) {
+func (m *MockRabbitMQService) LoginUserViaRabbit(req services.LoginUserRequest) (int, services.LoginUserResponse) {
 	return m.LoginUserViaRabbitFunc(req)
 }
 
-func (m *MockRabbitMQService) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, gin.H) {
+func (m *MockRabbitMQService) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, services.InitiatePaymentResponse) {
 	return m.InitiatePaymentViaRabbitFunc(req)
 }
 
-func (m *MockRabbitMQService) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, gin.H) {
+func (m *MockRabbitMQService) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, services.PollingTransactionResponse) {
 	return m.PollTransactionViaRabbitFunc(req)
 }
 

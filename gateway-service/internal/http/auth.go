@@ -3,14 +3,12 @@ package http
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
-	"github.com/gin-gonic/gin"
 )
 
 var _ services.HttpInterface = (*HTTPService)(nil)
@@ -29,104 +27,78 @@ func NewHTTPService(config pkg.Config) *HTTPService {
 	}
 }
 
-func (s *HTTPService) RegisterUserViaHttp(req services.RegisterUserRequest) (int, gin.H) {
+func (s *HTTPService) RegisterUserViaHttp(req services.RegisterUserRequest) (int, services.RegisterUserResponse) {
 	jsonData, err := json.Marshal(req)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't marshal request data")
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
-	request, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.registerPath),
-		bytes.NewBuffer(jsonData),
-	)
+	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.registerPath), bytes.NewBuffer(jsonData))
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't create request to authApp")
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	client := &http.Client{}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't send request to authApp")
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 	defer response.Body.Close()
 
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"Couldn't read response body from authApp",
-		)
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	var authServiceResponse services.RegisterUserResponse
 
 	err = json.Unmarshal(responseBody, &authServiceResponse)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"Couldn't unmarshal response body from authApp",
-		)
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return response.StatusCode, pkg.ErrorResponse(
-			errors.New(authServiceResponse.Message),
-			"Failed to register new user",
-		)
+		return response.StatusCode, services.RegisterUserResponse{Message: authServiceResponse.Message, StatusCode: authServiceResponse.StatusCode}
 	}
 
-	return http.StatusOK, gin.H{"response": authServiceResponse}
+	return http.StatusOK, authServiceResponse
 }
 
-func (s *HTTPService) LoginUserViaHttp(req services.LoginUserRequest) (int, gin.H) {
+func (s *HTTPService) LoginUserViaHttp(req services.LoginUserRequest) (int, services.LoginUserResponse) {
 	jsonData, err := json.Marshal(req)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't marshal request data")
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
-	request, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.loginPath),
-		bytes.NewBuffer(jsonData),
-	)
+	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/%s", s.config.AUTH_HTTP_PORT, s.loginPath), bytes.NewBuffer(jsonData))
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't create request to authApp")
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	client := &http.Client{}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Couldn't send request to authApp")
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 	defer response.Body.Close()
 
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"Couldn't read response body from authApp",
-		)
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	var jsonFromAuthService services.LoginUserResponse
 
 	err = json.Unmarshal(responseBody, &jsonFromAuthService)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"Couldn't unmarshal response body from authApp",
-		)
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return response.StatusCode, pkg.ErrorResponse(
-			errors.New(jsonFromAuthService.Message),
-			"Failed to login user",
-		)
+		return response.StatusCode, services.LoginUserResponse{Message: jsonFromAuthService.Message, StatusCode: jsonFromAuthService.StatusCode}
 	}
 
-	return http.StatusOK, gin.H{"response": jsonFromAuthService}
+	return http.StatusOK, jsonFromAuthService
 }

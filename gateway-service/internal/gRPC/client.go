@@ -5,7 +5,6 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
-	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -38,31 +37,19 @@ func (g *GrpcClient) Start(grpcPort string) error {
 	return nil
 }
 
-func grpcErrorResponse(code codes.Code, msg string) (int, gin.H) {
+func grpcCodeConvert(code codes.Code) int {
 	switch code {
 	case codes.Internal:
-		return http.StatusInternalServerError, gin.H{
-			"message": msg,
-		}
+		return http.StatusInternalServerError
 	case codes.NotFound:
-		return http.StatusNotFound, gin.H{
-			"message": msg,
-		}
+		return http.StatusNotFound
 	case codes.AlreadyExists:
-		return http.StatusForbidden, gin.H{
-			"message": msg,
-		}
+		return http.StatusForbidden
 	case codes.Unauthenticated:
-		return http.StatusUnauthorized, gin.H{
-			"message": msg,
-		}
+		return http.StatusUnauthorized
 	case codes.PermissionDenied:
-		return http.StatusForbidden, gin.H{
-			"message": msg,
-		}
+		return http.StatusForbidden
 	default:
-		return http.StatusInternalServerError, gin.H{
-			"message": msg,
-		}
+		return http.StatusInternalServerError
 	}
 }

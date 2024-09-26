@@ -103,7 +103,7 @@ func (s *UserRepository) GetUserByID(ctx context.Context, id int64) (*repository
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user not found: %s", err)
 		}
 
-		return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "error getting user: %v", err)
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error getting user: %v", err)
 	}
 
 	return &repository.User{

@@ -3,26 +3,27 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/brianvoe/gofakeit"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
-func mockRegisterUserViagRPC(_ services.RegisterUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "user created succesfull"}
+func mockRegisterUserViagRPC(_ services.RegisterUserRequest) (int, services.RegisterUserResponse) {
+	return http.StatusOK, services.RegisterUserResponse{Message: "success"}
 }
 
-func mockRegisterUserViaHttp(_ services.RegisterUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "user created succesfull"}
+func mockRegisterUserViaHttp(_ services.RegisterUserRequest) (int, services.RegisterUserResponse) {
+	return http.StatusOK, services.RegisterUserResponse{Message: "success"}
 }
 
-func mockRegisterUserViaRabbit(_ services.RegisterUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "user created succesfull"}
+func mockRegisterUserViaRabbit(_ services.RegisterUserRequest) (int, services.RegisterUserResponse) {
+	return http.StatusOK, services.RegisterUserResponse{Message: "success"}
 }
 
 func TestHttpServer_handleRegisterUser(t *testing.T) {
@@ -66,16 +67,16 @@ func TestHttpServer_handleRegisterUser(t *testing.T) {
 	}
 }
 
-func mockLoginUserViagRPC(_ services.LoginUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "user logged in successful"}
+func mockLoginUserViagRPC(_ services.LoginUserRequest) (int, services.LoginUserResponse) {
+	return http.StatusOK, services.LoginUserResponse{Message: "success"}
 }
 
-func mockLoginUserViaHttp(_ services.LoginUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "user logged in successful"}
+func mockLoginUserViaHttp(_ services.LoginUserRequest) (int, services.LoginUserResponse) {
+	return http.StatusOK, services.LoginUserResponse{Message: "success"}
 }
 
-func mockLoginUserViaRabbit(_ services.LoginUserRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "user logged in successful"}
+func mockLoginUserViaRabbit(_ services.LoginUserRequest) (int, services.LoginUserResponse) {
+	return http.StatusOK, services.LoginUserResponse{Message: "success"}
 }
 
 func TestHttpServer_handleLoginUser(t *testing.T) {
@@ -113,7 +114,7 @@ func TestHttpServer_handleLoginUser(t *testing.T) {
 			b, err := json.Marshal(tc.req)
 			require.NoError(t, err)
 
-			req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(b))
+			req, err := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(b))
 			require.NoError(t, err)
 
 			s.server.router.ServeHTTP(w, req)
@@ -122,12 +123,15 @@ func TestHttpServer_handleLoginUser(t *testing.T) {
 	}
 }
 
-func mockInitiatePaymentViaRabbit(_ services.InitiatePaymentRequest) (int, gin.H) {
-	return http.StatusOK, gin.H{"message": "payment initiated successfully"}
+func mockInitiatePaymentViaRabbit(_ services.InitiatePaymentRequest) (int, services.InitiatePaymentResponse) {
+	return http.StatusOK, services.InitiatePaymentResponse{Message: "success"}
 }
 
 func TestHttpServer_handleInitiatePayment(t *testing.T) {
 	s := NewTestHttpServer()
+
+	accessToken, err := s.server.maker.CreateToken("user", time.Minute)
+	require.NoError(t, err)
 
 	// change here to the communication channel you are using
 	s.RabbitService.InitiatePaymentViaRabbitFunc = mockInitiatePaymentViaRabbit
@@ -144,7 +148,7 @@ func TestHttpServer_handleInitiatePayment(t *testing.T) {
 				Action:      "withdrawal",
 				Amount:      200,
 				PhoneNumber: "phone_number",
-				NetworkCode: "network",
+				NetworkCode: "63902",
 				Naration:    "narration",
 			},
 			want: http.StatusOK,
@@ -166,24 +170,27 @@ func TestHttpServer_handleInitiatePayment(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, "/payments/initiate", bytes.NewBuffer(b))
 			require.NoError(t, err)
 
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
 			s.server.router.ServeHTTP(w, req)
 			require.Equal(t, tc.want, w.Code)
 		})
 	}
 }
 
-func mockPollTransactionViaRabbit(req services.PollingTransactionRequest) (int, gin.H) {
+func mockPollTransactionViaRabbit(req services.PollingTransactionRequest) (int, services.PollingTransactionResponse) {
 	if req.TransactionId == "bad_gateway" {
-		return http.StatusBadGateway, gin.H{
-			"error": "Bad Gateway",
-		}
+		return http.StatusBadGateway, services.PollingTransactionResponse{Message: "Bad gateway"}
 	}
 
-	return http.StatusOK, gin.H{"message": "transaction request processed"}
+	return http.StatusOK, services.PollingTransactionResponse{Message: "success"}
 }
 
 func TestHttpServer_handlePaymentPolling(t *testing.T) {
 	s := NewTestHttpServer()
+
+	accessToken, err := s.server.maker.CreateToken("user", time.Minute)
+	require.NoError(t, err)
 
 	// change here to the communication channel you are using
 	s.RabbitService.PollTransactionViaRabbitFunc = mockPollTransactionViaRabbit
@@ -206,6 +213,8 @@ func TestHttpServer_handlePaymentPolling(t *testing.T) {
 
 			req, err := http.NewRequest(http.MethodGet, tc.path, nil)
 			require.NoError(t, err)
+
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 
 			s.server.router.ServeHTTP(w, req)
 			require.Equal(t, tc.want, w.Code)

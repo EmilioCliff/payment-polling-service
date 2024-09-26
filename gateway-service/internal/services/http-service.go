@@ -1,10 +1,6 @@
 package services
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 type HttpInterface interface {
-	RegisterUserViaHttp(RegisterUserRequest) (int, gin.H)
-	LoginUserViaHttp(LoginUserRequest) (int, gin.H)
+	RegisterUserViaHttp(RegisterUserRequest) (int, RegisterUserResponse)
+	LoginUserViaHttp(LoginUserRequest) (int, LoginUserResponse)
 }

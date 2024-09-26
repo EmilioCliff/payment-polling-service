@@ -1,7 +1,6 @@
-version: '3.9'
+version: "3.9"
 
 services:
-
   gateway-service:
     container_name: gatewayApp
     build:
@@ -20,7 +19,7 @@ services:
 
   payments-service:
     container_name: paymentApp
-    build: 
+    build:
       context: ./payments-service
       dockerfile: ./Dockerfile
     ports:
@@ -40,11 +39,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s
+      start_period: 20s
 
   authentication-servie:
     container_name: authApp
-    build: 
+    build:
       context: ./authentication-service
       dockerfile: ./Dockerfile
     ports:
@@ -58,7 +57,7 @@ services:
         condition: service_healthy
       payments-service:
         condition: service_healthy
-    
+
   authPostgres:
     container_name: authPostgres
     image: postgres:alpine3.19

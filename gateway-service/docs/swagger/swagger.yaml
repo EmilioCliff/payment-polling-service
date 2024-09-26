@@ -1,0 +1,329 @@
+definitions:
+  pkg.APIError:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  services.InitiatePaymentRequest:
+    description: Payment can either be withdrawal or payment NetworkCode is either
+      63902 for Safaricom or 63903 for Airtel
+    properties:
+      action:
+        enum:
+        - withdrawal
+        - payment
+        example: withdrawal,payment
+        type: string
+      amount:
+        example: 1000
+        type: integer
+      naration:
+        example: Payment for services
+        type: string
+      network_code:
+        enum:
+        - "63902"
+        - "63903"
+        example: 63902,63903
+        type: string
+      phone_number:
+        example: "0712345678"
+        type: string
+      user_id:
+        example: 123456
+        type: integer
+    required:
+    - action
+    - amount
+    - naration
+    - network_code
+    - phone_number
+    - user_id
+    type: object
+  services.InitiatePaymentResponse:
+    properties:
+      action:
+        type: string
+      message:
+        type: string
+      payment_status:
+        type: boolean
+      status_code:
+        type: integer
+      transaction_id:
+        type: string
+    type: object
+  services.LoginUserRequest:
+    description: requires email and passwords successful login issues an access token
+      that can be used for payments endpoints
+    properties:
+      email:
+        example: jane@gmail.com
+        type: string
+      password:
+        example: secret
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  services.LoginUserResponse:
+    properties:
+      access_token:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  services.PollingTransactionResponse:
+    properties:
+      action:
+        type: string
+      amount:
+        type: integer
+      message:
+        type: string
+      naration:
+        type: string
+      network_code:
+        type: string
+      payd_transaction_ref:
+        type: string
+      payd_username:
+        type: string
+      payment_status:
+        type: boolean
+      phone_number:
+        type: string
+      status_code:
+        type: integer
+      transaction_id:
+        type: string
+    type: object
+  services.RegisterUserRequest:
+    description: User account information and api keys generated from payd
+    properties:
+      email:
+        example: jane@gmail.com
+        type: string
+      full_name:
+        example: Jane Doe
+        type: string
+      password:
+        example: secret
+        type: string
+      password_api_key:
+        example: U3dhZ2dlciByb2Nrcw==
+        type: string
+      payd_account_id:
+        example: account_id
+        type: string
+      payd_username:
+        example: username
+        type: string
+      username_api_key:
+        example: U3dhZ2dlciByb2Nrcw==
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - password_api_key
+    - payd_account_id
+    - payd_username
+    - username_api_key
+    type: object
+  services.RegisterUserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+externalDocs:
+  description: The project is from an online assessment internship opportunity
+  url: https://github.com/getpayd-tech/backend-intern-assesment
+host: localhost:8080
+info:
+  contact:
+    email: emiliocliff@gmail.com
+    name: Emilio Cliff
+  description: Payment Polling App is an online payment polling service. Get access
+    token after logging in successfully for protected endpoints
+  title: Payment Polling App
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user with credentials.
+      parameters:
+      - description: users login credetials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/services.LoginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/services.LoginUserResponse'
+        "400":
+          description: field validation error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "401":
+          description: invalid credentials
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "404":
+          description: user not found
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+      summary: Login a user
+      tags:
+      - users
+  /payments/initiate:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a payment transaction.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: payment details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.InitiatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/services.InitiatePaymentResponse'
+        "400":
+          description: field validation error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "401":
+          description: invalid credentials
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+      security:
+      - ApiKeyAuth: []
+      summary: Initiate a payment
+      tags:
+      - payments
+  /payments/status/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Polls the status of a payment transaction.
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/services.PollingTransactionResponse'
+        "400":
+          description: field validation error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "401":
+          description: invalid credentials
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "404":
+          description: transaction not found
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+      security:
+      - ApiKeyAuth: []
+      summary: Poll a payment
+      tags:
+      - payments
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user. There are some fields needed from your PaydAccount.
+      parameters:
+      - description: users details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/services.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/services.RegisterUserResponse'
+        "400":
+          description: field validation error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "409":
+          description: user already exists
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/pkg.APIError'
+      summary: Register a user
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    description: '"Enter your Bearer token in the format ''Bearer {token}''"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

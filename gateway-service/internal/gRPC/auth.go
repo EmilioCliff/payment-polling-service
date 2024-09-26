@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
-	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/status"
 )
 
-func (g *GrpcClient) RegisterUserViagRPC(req services.RegisterUserRequest) (int, gin.H) {
+func (g *GrpcClient) RegisterUserViagRPC(req services.RegisterUserRequest) (int, services.RegisterUserResponse) {
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -28,19 +26,23 @@ func (g *GrpcClient) RegisterUserViagRPC(req services.RegisterUserRequest) (int,
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok {
-			grpcCode := st.Code()
+			code := grpcCodeConvert(st.Code())
 			grpcMessage := st.Message()
 
-			return grpcErrorResponse(grpcCode, grpcMessage)
+			return code, services.RegisterUserResponse{Message: grpcMessage, StatusCode: code}
 		}
 
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
-	return http.StatusOK, gin.H{"response": rsp}
+	return http.StatusOK, services.RegisterUserResponse{
+		FullName:  rsp.GetFullname(),
+		Email:     rsp.GetEmail(),
+		CreatedAt: rsp.GetCreatedAt().AsTime(),
+	}
 }
 
-func (g *GrpcClient) LoginUserViagRPC(req services.LoginUserRequest) (int, gin.H) {
+func (g *GrpcClient) LoginUserViagRPC(req services.LoginUserRequest) (int, services.LoginUserResponse) {
 	c, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -51,14 +53,20 @@ func (g *GrpcClient) LoginUserViagRPC(req services.LoginUserRequest) (int, gin.H
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok {
-			grpcCode := st.Code()
+			code := grpcCodeConvert(st.Code())
 			grpcMessage := st.Message()
 
-			return grpcErrorResponse(grpcCode, grpcMessage)
+			return code, services.LoginUserResponse{Message: grpcMessage, StatusCode: code}
 		}
 
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "Non-gRPC error occurred")
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
-	return http.StatusOK, gin.H{"response": rsp}
+	return http.StatusOK, services.LoginUserResponse{
+		AccessToken:  rsp.GetAccessToken(),
+		FullName:     rsp.GetData().GetFullname(),
+		Email:        rsp.GetData().GetEmail(),
+		ExpirationAt: rsp.GetExpirationAt().AsTime(),
+		CreatedAt:    rsp.GetData().GetCreatedAt().AsTime(),
+	}
 }

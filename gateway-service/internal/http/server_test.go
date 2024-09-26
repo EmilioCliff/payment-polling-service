@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 
+	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs/statik"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/mock"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/gin-gonic/gin"

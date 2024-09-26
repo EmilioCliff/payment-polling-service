@@ -1,8 +1,6 @@
 package services
 
-import "github.com/gin-gonic/gin"
-
 type GrpcInterface interface {
-	RegisterUserViagRPC(RegisterUserRequest) (int, gin.H)
-	LoginUserViagRPC(LoginUserRequest) (int, gin.H)
+	RegisterUserViagRPC(RegisterUserRequest) (int, RegisterUserResponse)
+	LoginUserViagRPC(LoginUserRequest) (int, LoginUserResponse)
 }

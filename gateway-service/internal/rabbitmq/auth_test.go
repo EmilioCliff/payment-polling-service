@@ -9,7 +9,6 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/brianvoe/gofakeit"
-	"github.com/gin-gonic/gin"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +43,7 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 		name           string
 		mockDelivery   amqp.Delivery
 		expectedStatus int
-		expectedMsg    gin.H
+		expectedMsg    services.RegisterUserResponse
 		sleep          time.Duration
 	}{
 		{
@@ -54,7 +53,7 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusOK,
-			expectedMsg:    gin.H{"response": rsp},
+			expectedMsg:    rsp,
 			sleep:          100 * time.Millisecond,
 		},
 		{
@@ -64,8 +63,11 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusRequestTimeout,
-			expectedMsg:    gin.H{"error": "timeout waiting for response"},
-			sleep:          6 * time.Second,
+			expectedMsg: services.RegisterUserResponse{
+				Message:    "timeout waiting for response. Try again",
+				StatusCode: http.StatusInternalServerError,
+			},
+			sleep: 6 * time.Second,
 		},
 	}
 
@@ -74,10 +76,10 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 			statusCodeChan := make(chan int, 1)
 			defer close(statusCodeChan)
 
-			msgChan := make(chan gin.H, 1)
+			msgChan := make(chan services.RegisterUserResponse, 1)
 			defer close(msgChan)
 
-			go func(statusCodeChan chan int, msgChan chan gin.H) {
+			go func(statusCodeChan chan int, msgChan chan services.RegisterUserResponse) {
 				statusCode, msg := testRabbit.rabbit.RegisterUserViaRabbit(req)
 				statusCodeChan <- statusCode
 				msgChan <- msg
@@ -141,7 +143,7 @@ func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
 		name           string
 		mockDelivery   amqp.Delivery
 		expectedStatus int
-		expectedMsg    gin.H
+		expectedMsg    services.LoginUserResponse
 		sleep          time.Duration
 	}{
 		{
@@ -151,7 +153,7 @@ func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusOK,
-			expectedMsg:    gin.H{"response": rsp},
+			expectedMsg:    rsp,
 			sleep:          100 * time.Millisecond,
 		},
 		{
@@ -161,8 +163,11 @@ func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusRequestTimeout,
-			expectedMsg:    gin.H{"error": "timeout waiting for response"},
-			sleep:          6 * time.Second,
+			expectedMsg: services.LoginUserResponse{
+				Message:    "timeout waiting for response. Try again",
+				StatusCode: http.StatusInternalServerError,
+			},
+			sleep: 6 * time.Second,
 		},
 	}
 
@@ -171,10 +176,10 @@ func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
 			statusCodeChan := make(chan int, 1)
 			defer close(statusCodeChan)
 
-			msgChan := make(chan gin.H, 1)
+			msgChan := make(chan services.LoginUserResponse, 1)
 			defer close(msgChan)
 
-			go func(statusCodeChan chan int, msgChan chan gin.H) {
+			go func(statusCodeChan chan int, msgChan chan services.LoginUserResponse) {
 				statusCode, msg := testRabbit.rabbit.LoginUserViaRabbit(req)
 				statusCodeChan <- statusCode
 				msgChan <- msg

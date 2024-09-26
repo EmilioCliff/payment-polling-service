@@ -1,0 +1,516 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"description": "Payment Polling App is an online payment polling service. Get access token after logging in successfully for protected endpoints",
+		"title": "Payment Polling App",
+		"contact": {
+			"name": "Emilio Cliff",
+			"email": "emiliocliff@gmail.com"
+		},
+		"version": "1.0",
+		"license": {
+			"name": "MIT License",
+			"url": "https://opensource.org/license/mit"
+		}
+	},
+	"paths": {
+		"/login": {
+			"post": {
+				"description": "Logs in a user with credentials.",
+				"tags": ["users"],
+				"summary": "Login a user",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginUserRequest"
+							}
+						}
+					},
+					"description": "users login credetials",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LoginUserResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "field validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "invalid credentials",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "user not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/payments/initiate": {
+			"post": {
+				"security": [
+					{
+						"BearerAuth": []
+					}
+				],
+				"description": "Initiates a payment transaction.",
+				"tags": ["payments"],
+				"summary": "Initiate a payment",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/InitiatePaymentRequest"
+							}
+						}
+					},
+					"description": "payment details",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InitiatePaymentResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "field validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "invalid credentials",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/payments/status/{id}": {
+			"get": {
+				"security": [
+					{
+						"BearerAuth": []
+					}
+				],
+				"description": "Polls the status of a payment transaction.",
+				"tags": ["payments"],
+				"summary": "Poll a payment",
+				"parameters": [
+					{
+						"description": "Transaction ID",
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PollingTransactionResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "field validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "invalid credentials",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "transaction not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/register": {
+			"post": {
+				"description": "Registers a new user. There are some fields needed from your PaydAccount.",
+				"tags": ["users"],
+				"summary": "Register a user",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RegisterUserRequest"
+							}
+						}
+					},
+					"description": "users details",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RegisterUserResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "field validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "user already exists",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseError"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"externalDocs": {
+		"description": "The project is from an online assessment internship opportunity",
+		"url": "https://github.com/getpayd-tech/backend-intern-assesment"
+	},
+	"servers": [
+		{
+			"url": "http://localhost:8080"
+		}
+	],
+	"components": {
+		"securitySchemes": {
+			"BearerAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT",
+				"description": "Enter your access_token provided after a succesful login"
+			}
+		},
+		"schemas": {
+			"RegisterUserRequest": {
+				"description": "User account information and api keys generated from payd",
+				"type": "object",
+				"required": [
+					"email",
+					"full_name",
+					"password",
+					"password_api_key",
+					"payd_account_id",
+					"payd_username",
+					"username_api_key"
+				],
+				"properties": {
+					"email": {
+						"type": "string",
+						"example": "jane@gmail.com"
+					},
+					"full_name": {
+						"type": "string",
+						"example": "Jane Doe"
+					},
+					"password": {
+						"type": "string",
+						"example": "secret"
+					},
+					"password_api_key": {
+						"type": "string",
+						"example": "U3dhZ2dlciByb2Nrcw=="
+					},
+					"payd_account_id": {
+						"type": "string",
+						"example": "account_id"
+					},
+					"payd_username": {
+						"type": "string",
+						"example": "username"
+					},
+					"username_api_key": {
+						"type": "string",
+						"example": "U3dhZ2dlciByb2Nrcw=="
+					}
+				}
+			},
+			"RegisterUserResponse": {
+				"type": "object",
+				"properties": {
+					"created_at": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"full_name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status_code": {
+						"type": "integer"
+					}
+				}
+			},
+			"LoginUserRequest": {
+				"description": "requires email and passwords successful login issues an access token that can be used for payments endpoints",
+				"type": "object",
+				"required": ["email", "password"],
+				"properties": {
+					"email": {
+						"type": "string",
+						"example": "jane@gmail.com"
+					},
+					"password": {
+						"type": "string",
+						"example": "secret"
+					}
+				}
+			},
+			"LoginUserResponse": {
+				"type": "object",
+				"properties": {
+					"access_token": {
+						"type": "string"
+					},
+					"created_at": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"full_name": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status_code": {
+						"type": "integer"
+					}
+				}
+			},
+			"InitiatePaymentRequest": {
+				"description": "Payment can either be withdrawal or payment NetworkCode is either 63902 for Safaricom or 63903 for Airtel",
+				"type": "object",
+				"required": [
+					"action",
+					"amount",
+					"naration",
+					"network_code",
+					"phone_number",
+					"user_id"
+				],
+				"properties": {
+					"action": {
+						"type": "string",
+						"enum": ["withdrawal", "payment"],
+						"example": "withdrawal,payment"
+					},
+					"amount": {
+						"type": "integer",
+						"example": 1000
+					},
+					"naration": {
+						"type": "string",
+						"example": "Payment for services"
+					},
+					"network_code": {
+						"type": "string",
+						"enum": ["63902", "63903"],
+						"example": "63902,63903"
+					},
+					"phone_number": {
+						"type": "string",
+						"example": "0712345678"
+					},
+					"user_id": {
+						"type": "integer",
+						"example": 123456
+					}
+				}
+			},
+			"InitiatePaymentResponse": {
+				"type": "object",
+				"properties": {
+					"action": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"payment_status": {
+						"type": "boolean"
+					},
+					"status_code": {
+						"type": "integer"
+					},
+					"transaction_id": {
+						"type": "string"
+					}
+				}
+			},
+			"PollingTransactionResponse": {
+				"type": "object",
+				"properties": {
+					"action": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "integer"
+					},
+					"message": {
+						"type": "string"
+					},
+					"naration": {
+						"type": "string"
+					},
+					"network_code": {
+						"type": "string"
+					},
+					"payd_transaction_ref": {
+						"type": "string"
+					},
+					"payment_status": {
+						"type": "boolean"
+					},
+					"phone_number": {
+						"type": "string"
+					},
+					"status_code": {
+						"type": "integer"
+					},
+					"transaction_id": {
+						"type": "string"
+					}
+				}
+			},
+			"ResponseError": {
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	}
+}

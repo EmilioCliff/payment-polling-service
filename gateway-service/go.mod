@@ -9,10 +9,9 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/rabbitmq/amqp091-go v1.10.0
+	github.com/rakyll/statik v0.1.7
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/swaggo/files v1.0.1
-	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.8.12
 	github.com/testcontainers/testcontainers-go/modules/rabbitmq v0.33.0
 	go.uber.org/mock v0.4.0

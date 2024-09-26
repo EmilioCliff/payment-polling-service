@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -62,56 +61,48 @@ func TestGrpcClient_Start(t *testing.T) {
 	}
 }
 
-func TestGrpcClient_grpcErrorResponse(t *testing.T) {
+func TestGrpcClient_grpcCodeConvert(t *testing.T) {
 	tests := []struct {
-		name           string
-		code           codes.Code
-		msg            string
-		wantStatusCode int
+		name       string
+		code       codes.Code
+		statusCode int
 	}{
 		{
-			name:           "internal error",
-			code:           codes.Internal,
-			msg:            "internal error",
-			wantStatusCode: http.StatusInternalServerError,
+			name:       "internal error",
+			code:       codes.Internal,
+			statusCode: http.StatusInternalServerError,
 		},
 		{
-			name:           "not found",
-			code:           codes.NotFound,
-			msg:            "not found",
-			wantStatusCode: http.StatusNotFound,
+			name:       "not found",
+			code:       codes.NotFound,
+			statusCode: http.StatusNotFound,
 		},
 		{
-			name:           "already exists",
-			code:           codes.AlreadyExists,
-			msg:            "already exists",
-			wantStatusCode: http.StatusForbidden,
+			name:       "already exists",
+			code:       codes.AlreadyExists,
+			statusCode: http.StatusForbidden,
 		},
 		{
-			name:           "unathorized",
-			code:           codes.Unauthenticated,
-			msg:            "unathorized",
-			wantStatusCode: http.StatusUnauthorized,
+			name:       "unathorized",
+			code:       codes.Unauthenticated,
+			statusCode: http.StatusUnauthorized,
 		},
 		{
-			name:           "permission denied",
-			code:           codes.PermissionDenied,
-			msg:            "permission denied",
-			wantStatusCode: http.StatusForbidden,
+			name:       "permission denied",
+			code:       codes.PermissionDenied,
+			statusCode: http.StatusForbidden,
 		},
 		{
-			name:           "system error",
-			code:           codes.ResourceExhausted, // any code
-			msg:            "system error",
-			wantStatusCode: http.StatusInternalServerError,
+			name:       "system error",
+			code:       codes.ResourceExhausted, // any code
+			statusCode: http.StatusInternalServerError,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			statusCode, msg := grpcErrorResponse(tc.code, tc.msg)
-			require.Equal(t, statusCode, tc.wantStatusCode)
-			require.Equal(t, msg, gin.H{"message": tc.msg})
+			statusCode := grpcCodeConvert(tc.code)
+			require.Equal(t, statusCode, tc.statusCode)
 		})
 	}
 }

@@ -1,12 +1,12 @@
 package http
 
 import (
-	_ "github.com/EmilioCliff/payment-polling-app/gateway-service/docs"
+	"log"
+
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/rakyll/statik/fs"
 )
 
 type HttpServer struct {
@@ -31,11 +31,19 @@ func NewHttpServer(maker pkg.JWTMaker) *HttpServer {
 func (s *HttpServer) setRoutes() {
 	r := gin.Default()
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	auth := r.Group("/").Use(authenticationMiddleware(s.maker)) // requires access token
+
+	statikFs, err := fs.New()
+	if err != nil {
+		log.Fatal("cannot create statik fs")
+	}
+
+	r.StaticFS("/swagger", statikFs)
+
 	r.POST("/register", s.handleRegisterUser)
-	r.POST("/login", s.handleLoginUser)                   // need authentication
-	r.POST("/payments/initiate", s.handleInitiatePayment) // need authentication
-	r.GET("/payments/status/:id", s.handlePaymentPolling) // need authentication
+	r.POST("/login", s.handleLoginUser)
+	auth.POST("/payments/initiate", s.handleInitiatePayment)
+	auth.GET("/payments/status/:id", s.handlePaymentPolling)
 
 	s.router = r
 }

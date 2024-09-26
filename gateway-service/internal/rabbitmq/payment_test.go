@@ -9,7 +9,6 @@ import (
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
 	"github.com/brianvoe/gofakeit"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/require"
@@ -50,7 +49,7 @@ func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
 		name           string
 		mockDelivery   amqp.Delivery
 		expectedStatus int
-		expectedMsg    gin.H
+		expectedMsg    services.InitiatePaymentResponse
 		sleep          time.Duration
 	}{
 		{
@@ -60,7 +59,7 @@ func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusOK,
-			expectedMsg:    gin.H{"response": rsp},
+			expectedMsg:    rsp,
 			sleep:          100 * time.Millisecond,
 		},
 		{
@@ -70,8 +69,11 @@ func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusRequestTimeout,
-			expectedMsg:    gin.H{"error": "timeout waiting for response"},
-			sleep:          6 * time.Second,
+			expectedMsg: services.InitiatePaymentResponse{
+				Message:    "timeout waiting for response. Try again",
+				StatusCode: http.StatusInternalServerError,
+			},
+			sleep: 6 * time.Second,
 		},
 	}
 
@@ -80,10 +82,10 @@ func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
 			statusCodeChan := make(chan int, 1)
 			defer close(statusCodeChan)
 
-			msgChan := make(chan gin.H, 1)
+			msgChan := make(chan services.InitiatePaymentResponse, 1)
 			defer close(msgChan)
 
-			go func(statusCodeChan chan int, msgChan chan gin.H) {
+			go func(statusCodeChan chan int, msgChan chan services.InitiatePaymentResponse) {
 				statusCode, msg := testRabbit.rabbit.InitiatePaymentViaRabbit(req)
 				statusCodeChan <- statusCode
 				msgChan <- msg
@@ -144,7 +146,6 @@ func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
 		NetworkCode:        gofakeit.Word(),
 		Naration:           gofakeit.Name(),
 		PaymentStatus:      true,
-		PaydUsername:       gofakeit.Name(),
 	}
 
 	rspBytes, err := json.Marshal(rsp)
@@ -154,7 +155,7 @@ func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
 		name           string
 		mockDelivery   amqp.Delivery
 		expectedStatus int
-		expectedMsg    gin.H
+		expectedMsg    services.PollingTransactionResponse
 		sleep          time.Duration
 	}{
 		{
@@ -164,7 +165,7 @@ func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusOK,
-			expectedMsg:    gin.H{"response": rsp},
+			expectedMsg:    rsp,
 			sleep:          100 * time.Millisecond,
 		},
 		{
@@ -174,8 +175,11 @@ func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
 				Body:        rspBytes,
 			},
 			expectedStatus: http.StatusRequestTimeout,
-			expectedMsg:    gin.H{"error": "timeout waiting for response"},
-			sleep:          6 * time.Second,
+			expectedMsg: services.PollingTransactionResponse{
+				Message:    "timeout waiting for response. Try again",
+				StatusCode: http.StatusInternalServerError,
+			},
+			sleep: 6 * time.Second,
 		},
 	}
 
@@ -184,10 +188,10 @@ func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
 			statusCodeChan := make(chan int, 1)
 			defer close(statusCodeChan)
 
-			msgChan := make(chan gin.H, 1)
+			msgChan := make(chan services.PollingTransactionResponse, 1)
 			defer close(msgChan)
 
-			go func(statusCodeChan chan int, msgChan chan gin.H) {
+			go func(statusCodeChan chan int, msgChan chan services.PollingTransactionResponse) {
 				statusCode, msg := testRabbit.rabbit.PollTransactionViaRabbit(req)
 				statusCodeChan <- statusCode
 				msgChan <- msg

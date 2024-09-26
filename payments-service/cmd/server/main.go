@@ -54,11 +54,17 @@ func main() {
 
 	select {
 	case err := <-processorErrChan:
-		log.Fatalf("Error starting processor: %v", err)
+		if err != nil {
+			log.Fatalf("Error starting processor: %v", err)
+		}
+
 		close(processorErrChan)
 		return
 	case err := <-rabbitErrChan:
-		log.Fatalf("Error starting rabbit consumer: %v", err)
+		if err != nil {
+			log.Fatalf("Error starting rabbit consumer: %v", err)
+		}
+
 		close(rabbitErrChan)
 		return
 	default:

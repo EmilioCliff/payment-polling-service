@@ -21,7 +21,10 @@ var (
 type Store interface {
 	generated.Querier
 	CreateTransactions(ctx context.Context, req InitiatePaymentRequest) (*InitiatePaymentResponse, *pkg.Error)
-	PollingTransaction(ctx context.Context, req PollingTransactionRequest) (*PollingTransactionResponse, *pkg.Error)
+	PollingTransaction(
+		ctx context.Context,
+		req PollingTransactionRequest,
+	) (*PollingTransactionResponse, *pkg.Error)
 }
 
 type SQLStore struct {
@@ -31,9 +34,11 @@ type SQLStore struct {
 
 func GetStore() (Store, error) {
 	var err error
+
 	once.Do(func() {
 		storeInstance, err = NewStore()
 	})
+
 	return storeInstance, err
 }
 
@@ -53,6 +58,7 @@ func (s *SQLStore) Start() error {
 	if err != nil {
 		return err
 	}
+
 	s.config = config
 
 	if s.config.DB_URL == "" {

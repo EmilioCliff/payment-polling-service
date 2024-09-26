@@ -14,7 +14,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -34,7 +33,7 @@ func TestGrpcClient_RegisterUserViagRPC(t *testing.T) {
 	tests := []struct {
 		name           string
 		buildStubs     func(*grpcmock.MockAuthenticationServiceClient)
-		want           *pb.RegisterUserResponse
+		want           services.RegisterUserResponse
 		wantStatusCode int
 		wantErr        bool
 	}{
@@ -50,10 +49,10 @@ func TestGrpcClient_RegisterUserViagRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			want: &pb.RegisterUserResponse{
-				Fullname:  req.FullName,
+			want: services.RegisterUserResponse{
+				FullName:  req.FullName,
 				Email:     req.Email,
-				CreatedAt: timestamppb.New(TestTime),
+				CreatedAt: TestTime,
 			},
 			wantStatusCode: http.StatusOK,
 			wantErr:        false,
@@ -66,7 +65,7 @@ func TestGrpcClient_RegisterUserViagRPC(t *testing.T) {
 					Return(nil, status.Errorf(codes.Internal, "internal error")).
 					Times(1)
 			},
-			want:           nil,
+			want:           services.RegisterUserResponse{},
 			wantStatusCode: http.StatusInternalServerError,
 			wantErr:        true,
 		},
@@ -78,7 +77,7 @@ func TestGrpcClient_RegisterUserViagRPC(t *testing.T) {
 					Return(nil, errors.New("some unknown error")).
 					Times(1)
 			},
-			want:           nil,
+			want:           services.RegisterUserResponse{},
 			wantStatusCode: http.StatusInternalServerError,
 			wantErr:        true,
 		},
@@ -92,8 +91,8 @@ func TestGrpcClient_RegisterUserViagRPC(t *testing.T) {
 			require.Equal(t, statusCode, tc.wantStatusCode)
 
 			if !tc.wantErr {
-				if !proto.Equal(msg["response"].(*pb.RegisterUserResponse), tc.want) {
-					t.Errorf("register user got = %v, want %v", msg["response"], tc.want)
+				if msg != tc.want {
+					t.Errorf("register user got = %v, want %v", msg, tc.want)
 				}
 			}
 		})
@@ -114,7 +113,7 @@ func TestGrpcClient_LoginUserViagRPC(t *testing.T) {
 		Password: gofakeit.Password(true, true, true, true, true, 7),
 	}
 
-	rsp := &pb.LoginUserResponse{
+	grpcRsp := &pb.LoginUserResponse{
 		AccessToken:  "token",
 		ExpirationAt: timestamppb.New(TestTime),
 		Data: &pb.RegisterUserResponse{
@@ -124,10 +123,18 @@ func TestGrpcClient_LoginUserViagRPC(t *testing.T) {
 		},
 	}
 
+	loginRsp := services.LoginUserResponse{
+		AccessToken:  "token",
+		ExpirationAt: TestTime,
+		FullName:     grpcRsp.Data.GetFullname(),
+		Email:        req.Email,
+		CreatedAt:    TestTime,
+	}
+
 	tests := []struct {
 		name           string
 		buildStubs     func(*grpcmock.MockAuthenticationServiceClient)
-		want           *pb.LoginUserResponse
+		want           services.LoginUserResponse
 		wantStatusCode int
 		wantErr        bool
 	}{
@@ -136,10 +143,10 @@ func TestGrpcClient_LoginUserViagRPC(t *testing.T) {
 			buildStubs: func(mockCalls *grpcmock.MockAuthenticationServiceClient) {
 				mockCalls.EXPECT().
 					LoginUser(gomock.Any(), gomock.Eq(loginRequestToPb(req))).
-					Return(rsp, nil).
+					Return(grpcRsp, nil).
 					Times(1)
 			},
-			want:           rsp,
+			want:           loginRsp,
 			wantStatusCode: http.StatusOK,
 			wantErr:        false,
 		},
@@ -151,7 +158,7 @@ func TestGrpcClient_LoginUserViagRPC(t *testing.T) {
 					Return(nil, status.Errorf(codes.Internal, "internal error")).
 					Times(1)
 			},
-			want:           nil,
+			want:           services.LoginUserResponse{},
 			wantStatusCode: http.StatusInternalServerError,
 			wantErr:        true,
 		},
@@ -163,7 +170,7 @@ func TestGrpcClient_LoginUserViagRPC(t *testing.T) {
 					Return(nil, errors.New("some unknown error")).
 					Times(1)
 			},
-			want:           nil,
+			want:           services.LoginUserResponse{},
 			wantStatusCode: http.StatusInternalServerError,
 			wantErr:        true,
 		},
@@ -177,8 +184,8 @@ func TestGrpcClient_LoginUserViagRPC(t *testing.T) {
 			require.Equal(t, statusCode, tc.wantStatusCode)
 
 			if !tc.wantErr {
-				if !proto.Equal(msg["response"].(*pb.LoginUserResponse), tc.want) {
-					t.Errorf("login user got = %v, want %v", msg["response"], tc.want)
+				if msg != tc.want {
+					t.Errorf("login user got = %v, want %v", msg, tc.want)
 				}
 			}
 		})

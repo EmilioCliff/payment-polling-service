@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
-	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, gin.H) {
+func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, services.RegisterUserResponse) {
 	payload := services.Payload{
 		Name: "register_user",
 		Data: req,
@@ -21,7 +19,7 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 
 	payloadRabitData, err := json.Marshal(payload)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	correlationID := uuid.New().String()
@@ -47,10 +45,7 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 			Body:          payloadRabitData,
 		})
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"error communicating to the authentication service via rabbitmq",
-		)
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	select {
@@ -60,23 +55,29 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 
 			err := json.Unmarshal(msg.Body, &authResp)
 			if err != nil {
-				return http.StatusInternalServerError, gin.H{"error": "failed to parse response"}
+				return http.StatusInternalServerError, services.RegisterUserResponse{
+					Message:    "internal error",
+					StatusCode: http.StatusInternalServerError,
+				}
 			}
 
 			if authResp.Message != "" {
-				return authResp.StatusCode, gin.H{"error": authResp.Message}
+				return authResp.StatusCode, services.RegisterUserResponse{Message: authResp.Message, StatusCode: authResp.StatusCode}
 			}
 
-			return http.StatusOK, gin.H{"response": authResp}
+			return http.StatusOK, authResp
 		}
 	case <-time.After(5 * time.Second):
-		return http.StatusRequestTimeout, gin.H{"error": "timeout waiting for response"}
+		return http.StatusRequestTimeout, services.RegisterUserResponse{
+			Message:    "timeout waiting for response. Try again",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	return http.StatusInternalServerError, gin.H{"error": "unknown error"}
+	return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 }
 
-func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, gin.H) {
+func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, services.LoginUserResponse) {
 	payload := services.Payload{
 		Name: "login_user",
 		Data: req,
@@ -84,7 +85,7 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 
 	payloadRabitData, err := json.Marshal(payload)
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(err, "error marshalling request body")
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	correlationID := uuid.New().String()
@@ -110,10 +111,7 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 			Body:          payloadRabitData,
 		})
 	if err != nil {
-		return http.StatusInternalServerError, pkg.ErrorResponse(
-			err,
-			"error communicating to the authentication service via rabbitmq",
-		)
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 	}
 
 	select {
@@ -123,19 +121,25 @@ func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, 
 
 			err := json.Unmarshal(msg.Body, &loginResp)
 			if err != nil {
-				return http.StatusInternalServerError, gin.H{"error": "Failed to parse response"}
+				return http.StatusInternalServerError, services.LoginUserResponse{
+					Message:    "internal error",
+					StatusCode: http.StatusInternalServerError,
+				}
 			}
 
 			if loginResp.Message != "" {
-				return loginResp.StatusCode, gin.H{"error": loginResp.Message}
+				return loginResp.StatusCode, services.LoginUserResponse{Message: loginResp.Message, StatusCode: loginResp.StatusCode}
 			}
 
-			return http.StatusOK, gin.H{"response": loginResp}
+			return http.StatusOK, loginResp
 		}
 
 	case <-time.After(5 * time.Second):
-		return http.StatusRequestTimeout, gin.H{"error": "timeout waiting for response"}
+		return http.StatusRequestTimeout, services.LoginUserResponse{
+			Message:    "timeout waiting for response. Try again",
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
-	return http.StatusInternalServerError, gin.H{"error": "unknown error"}
+	return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
 }

@@ -439,9 +439,9 @@
 						"type": "string",
 						"example": "0712345678"
 					},
-					"user_id": {
-						"type": "integer",
-						"example": 123456
+					"email": {
+						"type": "string",
+						"example": "jane@gmail.com"
 					}
 				}
 			},
@@ -475,6 +475,9 @@
 						"type": "integer"
 					},
 					"message": {
+						"type": "string"
+					},
+					"remarks": {
 						"type": "string"
 					},
 					"naration": {

@@ -57,8 +57,8 @@ func (s *UserRepository) CreateUser(ctx context.Context, u repository.User) (*re
 		PaydAccountID:   u.PaydAccountID,
 	})
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code.Name() == "unique_violation" {
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code == "23505" {
 				return nil, pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "user already exists: %s", err)
 			}
 		}

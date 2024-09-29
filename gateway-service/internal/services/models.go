@@ -40,7 +40,7 @@ type LoginUserResponse struct {
 }
 
 type InitiatePaymentRequest struct {
-	UserID      int64  `binding:"required"                          json:"user_id"`
+	Email       string `binding:"required"                          json:"email"`
 	Action      string `binding:"required,oneof=withdrawal payment" json:"action"`
 	Amount      int64  `binding:"required"                          json:"amount"`
 	PhoneNumber string `binding:"required"                          json:"phone_number"`
@@ -63,6 +63,7 @@ type PollingTransactionRequest struct {
 type PollingTransactionResponse struct {
 	TransactionID      uuid.UUID `json:"transaction_id,omitempty"`
 	PaydTransactionRef string    `json:"payd_transaction_ref,omitempty"`
+	Remarks            string    `json:"remarks,omitempty"`
 	Action             string    `json:"action,omitempty"`
 	Amount             int64     `json:"amount,omitempty"`
 	PhoneNumber        string    `json:"phone_number,omitempty"`

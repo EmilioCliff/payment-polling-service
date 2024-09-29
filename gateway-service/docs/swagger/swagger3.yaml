@@ -302,9 +302,9 @@ components:
         phone_number:
           type: string
           example: "0712345678"
-        user_id:
-          type: integer
-          example: 123456
+        email:
+          type: string
+          example: "jane@gmail.com"
     InitiatePaymentResponse:
       type: object
       properties:
@@ -328,6 +328,8 @@ components:
         message:
           type: string
         naration:
+          type: string
+        remarks:
           type: string
         network_code:
           type: string

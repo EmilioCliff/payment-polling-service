@@ -12,9 +12,14 @@ import (
 )
 
 func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) (int, services.RegisterUserResponse) {
+	dataBytes, err := json.Marshal(req)
+	if err != nil {
+		return http.StatusInternalServerError, services.RegisterUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
+	}
+
 	payload := services.Payload{
 		Name: "register_user",
-		Data: req,
+		Data: dataBytes,
 	}
 
 	payloadRabitData, err := json.Marshal(payload)
@@ -78,9 +83,14 @@ func (r *RabbitHandler) RegisterUserViaRabbit(req services.RegisterUserRequest) 
 }
 
 func (r *RabbitHandler) LoginUserViaRabbit(req services.LoginUserRequest) (int, services.LoginUserResponse) {
+	dataBytes, err := json.Marshal(req)
+	if err != nil {
+		return http.StatusInternalServerError, services.LoginUserResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
+	}
+
 	payload := services.Payload{
 		Name: "login_user",
-		Data: req,
+		Data: dataBytes,
 	}
 
 	payloadRabitData, err := json.Marshal(payload)

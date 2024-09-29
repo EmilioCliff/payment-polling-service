@@ -20,6 +20,7 @@ var (
 type Payload struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
+	UserID   int64     `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
@@ -57,7 +58,7 @@ func NewJWTMaker(privateKeyPath string, publicKeyPath string) (*JWTMaker, error)
 	return maker, nil
 }
 
-func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (maker *JWTMaker) CreateToken(username string, userID int64, duration time.Duration) (string, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return "", fmt.Errorf("error generating token uuid")
@@ -66,6 +67,7 @@ func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (str
 	claims := Payload{
 		id,
 		username,
+		userID,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

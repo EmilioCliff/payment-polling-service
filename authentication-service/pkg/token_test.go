@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -20,10 +19,11 @@ func TestTokenFunc(t *testing.T) {
 		{
 			name: "valid token",
 			runTest: func(maker *JWTMaker, t *testing.T) {
-				username := gofakeit.Username()
+				username := "Emilio Cliff"
+				userID := int64(1)
 				duration := time.Minute
 
-				token, err := maker.CreateToken(username, duration)
+				token, err := maker.CreateToken(username, userID, duration)
 				require.NoError(t, err)
 				require.NotEmpty(t, token)
 
@@ -33,15 +33,16 @@ func TestTokenFunc(t *testing.T) {
 
 				require.NotZero(t, payload.ID)
 				require.Equal(t, username, payload.Username)
+				require.Equal(t, userID, payload.UserID)
 			},
 		},
 		{
 			name: "expired token",
 			runTest: func(maker *JWTMaker, t *testing.T) {
-				username := gofakeit.Username()
+				username := "Emilio Cliff"
 				duration := -time.Minute
 
-				token, err := maker.CreateToken(username, duration)
+				token, err := maker.CreateToken(username, 1, duration)
 				require.NoError(t, err)
 				require.NotEmpty(t, token)
 
@@ -59,7 +60,8 @@ func TestTokenFunc(t *testing.T) {
 
 				claims := Payload{
 					uuid,
-					gofakeit.Username(),
+					"username",
+					1,
 					jwt.RegisteredClaims{
 						ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 						IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -85,7 +87,8 @@ func TestTokenFunc(t *testing.T) {
 
 				claims := Payload{
 					uuid,
-					gofakeit.Username(),
+					"username",
+					1,
 					jwt.RegisteredClaims{
 						ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 						IssuedAt:  jwt.NewNumericDate(time.Now()),

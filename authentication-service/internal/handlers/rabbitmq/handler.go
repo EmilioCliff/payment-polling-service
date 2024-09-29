@@ -91,7 +91,7 @@ func (r *RabbitConn) HandleLoginUser(req LoginUserRequest) []byte {
 		)
 	}
 
-	accessToken, err := r.Maker.CreateToken(user.Email, r.Config.TOKEN_DURATION)
+	accessToken, err := r.Maker.CreateToken(user.Email, user.ID, r.Config.TOKEN_DURATION)
 	if err != nil {
 		return errorRabbitMQResponse(
 			pkg.Errorf(pkg.AUTHENTICATION_ERROR, "Error creating token: %v", err),

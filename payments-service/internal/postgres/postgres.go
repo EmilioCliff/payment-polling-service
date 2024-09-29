@@ -3,9 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"sync"
 
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres/generated"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -13,54 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var (
-	storeInstance Store
-	once          sync.Once
-)
-
-type Store interface {
-	generated.Querier
-	CreateTransactions(ctx context.Context, req InitiatePaymentRequest) (*InitiatePaymentResponse, *pkg.Error)
-	PollingTransaction(
-		ctx context.Context,
-		req PollingTransactionRequest,
-	) (*PollingTransactionResponse, *pkg.Error)
-}
-
-type SQLStore struct {
-	*generated.Queries
+type Store struct {
+	conn   *pgxpool.Pool
 	config pkg.Config
 }
 
-func GetStore() (Store, error) {
-	var err error
-
-	once.Do(func() {
-		storeInstance, err = NewStore()
-	})
-
-	return storeInstance, err
+func NewStore(config pkg.Config) *Store {
+	return &Store{
+		config: config,
+	}
 }
 
-func NewStore() (Store, error) {
-	store := &SQLStore{}
-
-	err := store.Start()
-	if err != nil {
-		return nil, fmt.Errorf("error starting store: %v", err)
-	}
-
-	return store, nil
-}
-
-func (s *SQLStore) Start() error {
-	config, err := pkg.LoadConfig(".")
-	if err != nil {
-		return err
-	}
-
-	s.config = config
-
+func (s *Store) Start() error {
 	if s.config.DB_URL == "" {
 		return fmt.Errorf("dsn is empty")
 	}
@@ -70,18 +32,17 @@ func (s *SQLStore) Start() error {
 		return fmt.Errorf("Failed to connect to db: %s", err)
 	}
 
-	queries := generated.New(postgresConn)
-	s.Queries = queries
-
-	err = s.migrate()
+	err = postgresConn.Ping(context.Background())
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to connect to db")
 	}
 
-	return nil
+	s.conn = postgresConn
+
+	return s.migrate()
 }
 
-func (s *SQLStore) migrate() error {
+func (s *Store) migrate() error {
 	if s.config.MIGRATION_PATH == "" {
 		return fmt.Errorf("migration dir is empty")
 	}

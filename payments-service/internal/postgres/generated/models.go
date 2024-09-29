@@ -22,4 +22,5 @@ type Transaction struct {
 	Status             bool      `json:"status"`
 	UpdatedAt          time.Time `json:"updated_at"`
 	CreatedAt          time.Time `json:"created_at"`
+	Message            string    `json:"message"`
 }

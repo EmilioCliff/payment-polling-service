@@ -86,14 +86,14 @@ func (s *HTTPServer) handleLoginUser(ctx *gin.Context) {
 
 	err = pkg.ComparePasswordAndHash(rsp.Password, req.Password)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"status_code": http.StatusUnauthorized, "message": err})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"status_code": http.StatusUnauthorized, "message": err.Error()})
 
 		return
 	}
 
-	accessToken, err := s.maker.CreateToken(rsp.Email, s.config.TOKEN_DURATION)
+	accessToken, err := s.maker.CreateToken(rsp.Email, rsp.ID, s.config.TOKEN_DURATION)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"status_code": http.StatusInternalServerError, "message": err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"status_code": http.StatusInternalServerError, "message": err.Error()})
 	}
 
 	ctx.JSON(http.StatusOK, LoginUserResponse{

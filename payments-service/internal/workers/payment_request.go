@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
@@ -25,23 +25,30 @@ type SendPaymentWithdrawalRequestPayload struct {
 	NetworkCode        string    `json:"network_code"`
 	Naration           string    `json:"naration"`
 	PaydUsername       string    `json:"payd_username"`
+	PaydAccountID      string    `json:"payd_account_id"`
 	PaydPasswordApiKey string    `json:"payd_password_api_key"`
 	PaydUsernameApiKey string    `json:"payd_username_api_key"`
 }
 
-func (distributor *RedisTaskDistributor) DistributeSendPaymentRequestTask(ctx context.Context, payload SendPaymentWithdrawalRequestPayload, opt ...asynq.Option) error {
+func (distributor *RedisTaskDistributor) DistributeSendPaymentRequestTask(
+	ctx context.Context,
+	payload SendPaymentWithdrawalRequestPayload,
+	opt ...asynq.Option,
+) error {
 	jsonPaymentRequestPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("Failed to marshal payload: %w", err)
 	}
 
 	task := asynq.NewTask(SendPaymentRequestTask, jsonPaymentRequestPayload, opt...)
+
 	info, err := distributor.client.EnqueueContext(ctx, task)
 	if err != nil {
 		return fmt.Errorf("failed to enqueue task: %w", err)
 	}
 
 	log.Printf("Enqueued task: %s\n", info.ID)
+
 	return nil
 }
 
@@ -61,7 +68,7 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 		"phone_number": taskPayload.PhoneNumber,
 		"narration":    taskPayload.Naration,
 		"currency":     "KES",
-		"callback_url": fmt.Sprintf("https://1336-105-163-156-6.ngrok-free.app/transaction/%v", taskPayload.TransactionID.String()),
+		"callback_url": fmt.Sprintf("%s/transaction/%v", processor.config.PAYD_CALLBACK_URL, taskPayload.TransactionID.String()),
 	}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -72,6 +79,7 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 	jsonString := strings.NewReader(string(jsonPayload))
 
 	client := &http.Client{}
+
 	req, err := http.NewRequest(method, url, jsonString)
 	if err != nil {
 		return fmt.Errorf("Failed to create request: %w", err)
@@ -86,37 +94,36 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 	}
 	defer res.Body.Close()
 
-	// check for other errors ie invalid phone number
-	// check if there was an error on the server side
-	if res.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("Request failed with status code: %d", res.StatusCode)
-	}
-
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return fmt.Errorf("Failed to read response body: %w", err)
 	}
 
 	var responseData map[string]interface{}
+
 	err = json.Unmarshal(resBody, &responseData)
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshal response body: %w", err)
 	}
 
-	transactionReference := responseData["merchantRequestID"].(string)
+	transactionReference, _ := responseData["merchantRequestID"].(string)
+	message, _ := responseData["message"].(string)
+	errorMessage, _ := responseData["error_message"].(string)
 
-	_, pkgErr := processor.store.CreateTransactions(ctx, postgres.InitiatePaymentRequest{
-		TransactionID:      taskPayload.TransactionID,
-		PaydTransactionRef: transactionReference,
-		UserID:             taskPayload.UserID,
-		Action:             taskPayload.Action,
-		Amount:             taskPayload.Amount,
-		PhoneNumber:        taskPayload.PhoneNumber,
-		NetworkCode:        taskPayload.NetworkCode,
-		Naration:           taskPayload.Naration,
-	})
+	if errorMessage != "" {
+		message = "Payd Error: " + errorMessage
+	}
 
-	if pkgErr != nil {
+	if res.StatusCode != http.StatusAccepted {
+		err = processor.createTransaction(ctx, taskPayload, transactionReference, message, "failed")
+
+		return fmt.Errorf("Request failed with status code: %d and error: %v", res.StatusCode, err)
+	}
+
+	err = processor.createTransaction(ctx, taskPayload, transactionReference, message, "success")
+	if err != nil {
+		pkgErr, _ := err.(*pkg.Error)
+
 		return fmt.Errorf("Failed to create transaction: %v\nWith error: %v", pkgErr.Message, pkgErr.Code)
 	}
 

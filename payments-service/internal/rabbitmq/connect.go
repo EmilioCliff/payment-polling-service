@@ -3,100 +3,70 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"math"
 	"time"
 
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/repository"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/workers"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
-	"github.com/hibiken/asynq"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
-
-const (
-	PAYMENT_CONSUMER_NAME = "payment_service"
-)
-
-type RabbitConn struct {
-	distributor workers.TaskDistributor
-	conn        *amqp.Connection
-	config      pkg.Config
-	client      pb.AuthenticationServiceClient
-	store       postgres.Store
-}
-
-func NewRabbitConn() (*RabbitConn, error) {
-	rabbit := &RabbitConn{}
-
-	config, err := pkg.LoadConfig(".")
-	if err != nil {
-		return nil, err
-	}
-
-	distributor := workers.NewRedisTaskDistributor(asynq.RedisClientOpt{
-		Addr: config.REDDIS_ADDR,
-		DB:   1,
-	})
-
-	conn, err := rabbit.connectToRabbit(config.RABBITMQ_URL)
-	if err != nil {
-		return nil, err
-	}
-
-	gRPCconn, err := grpc.NewClient(
-		config.AUTH_GRPC_URL,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	store, err := postgres.GetStore()
-	if err != nil {
-		return nil, err
-	}
-
-	rabbit.config = config
-	rabbit.distributor = distributor
-	rabbit.conn = conn
-	rabbit.client = pb.NewAuthenticationServiceClient(gRPCconn)
-	rabbit.store = store
-
-	return rabbit, nil
-}
 
 type Payload struct {
 	Name string `json:"name"`
-	Data any    `json:"data"`
+	Data []byte `json:"data"`
 }
 
-func (r *RabbitConn) connectToRabbit(rabitURL string) (*amqp.Connection, error) {
+type RabbitConn struct {
+	conn   *amqp.Connection
+	config pkg.Config
+
+	client                pb.AuthenticationServiceClient
+	Distributor           workers.TaskDistributor
+	TransactionRepository repository.TransactionRepository
+}
+
+func NewRabbitConn(config pkg.Config, client pb.AuthenticationServiceClient) *RabbitConn {
+	return &RabbitConn{
+		config: config,
+		client: client,
+	}
+}
+
+func (r *RabbitConn) ConnectToRabbit() error {
 	count := 0
-	rollOff := 1 * time.Second
+	maxRetries := 12
+
 	var err error
+
 	var connection *amqp.Connection
+
 	for {
-		connection, err = amqp.Dial(rabitURL)
+		connection, err = amqp.Dial(r.config.RABBITMQ_URL)
 		if err != nil {
 			log.Println("failed to connect to rabbitmq", err)
-			if count > 12 {
-				return nil, err
+
+			if count > maxRetries {
+				return err
 			}
+
 			count++
-			rollOff = time.Duration(math.Pow(float64(count), 2)) * time.Second
+			rollOff := time.Duration(math.Pow(float64(count), 2)) * time.Second
 			time.Sleep(rollOff)
+
 			continue
 		}
-		fmt.Println("Connected to rabbitmq")
+
+		log.Println("Connected to rabbitmq")
+
 		break
 	}
 
-	return connection, nil
+	r.conn = connection
+
+	return nil
 }
 
 func (r *RabbitConn) SetConsumer(topics []string) error {
@@ -143,14 +113,14 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 		}
 	}
 
-	messages, err := ch.Consume(
-		q.Name,                // queue
-		PAYMENT_CONSUMER_NAME, // consumer
-		false,                 // auto ack
-		false,                 // exclusive
-		false,                 // no local
-		false,                 // no wait
-		nil,                   // args
+	msgs, err := ch.Consume(
+		q.Name,                         // queue
+		r.config.PAYMENT_CONSUMER_NAME, // consumer
+		false,                          // auto-ack
+		false,                          // exclusive
+		false,                          // no-local
+		false,                          // no-wait
+		nil,                            // args
 	)
 	if err != nil {
 		return err
@@ -162,48 +132,56 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		for msg := range messages {
+		for d := range msgs {
 			var payload Payload
-			err := json.Unmarshal(msg.Body, &payload)
+
+			err := json.Unmarshal(d.Body, &payload)
 			if err != nil {
-				log.Printf("failed to unmarshal message in payment service: %s", err)
-				msg.Nack(false, true)
+				log.Printf("failed to unmarshal message in auth rabbit: %s", err)
+
+				_ = d.Nack(false, true)
+
 				return
 			}
 
 			response := r.distributeTask(payload)
 
-			log.Printf("Message acknowledged from payment service: %v", msg.DeliveryTag)
-			msg.Ack(false)
+			log.Printf("Message acknowledged from payment service: %v", d.DeliveryTag)
+
+			_ = d.Ack(false)
 
 			count := 0
+			maxRetries := 5
+
 			for {
 				err = ch.PublishWithContext(ctx,
 					r.config.EXCH, // exchange
-					msg.ReplyTo,   // routing key
+					d.ReplyTo,     // routing key
 					false,         // mandatory
 					false,         // immediate
 					amqp.Publishing{
 						ContentType:   "text/plain",
-						CorrelationId: msg.CorrelationId,
+						CorrelationId: d.CorrelationId,
 						Body:          response,
 					},
 				)
 				if err == nil {
 					break
-				} else {
-					count++
-					if count > 5 {
-						// log to failed to send response
-						log.Printf("failed to send response: %s", err)
-						return
-					}
+				}
+
+				count++
+
+				if count > maxRetries {
+					// log to failed to send response
+					log.Printf("failed to send response: %s", err)
+
+					return
 				}
 			}
 		}
 	}()
 
-	log.Println("listening to messages in authentication service")
+	log.Println("listening to messages in payment service")
 
 	<-forever
 
@@ -213,42 +191,21 @@ func (r *RabbitConn) SetConsumer(topics []string) error {
 func (r *RabbitConn) distributeTask(payload Payload) []byte {
 	switch payload.Name {
 	case "initiate_payment":
-		// use reflect
-
-		// if nn, ok := payload.Data.(initiatePaymentRequest); ok {
-		// 	nn.
-		// }
-		dataBytes, err := json.Marshal(payload.Data)
-		if err != nil {
-			return r.errorRabbitMQResponse(
-				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err),
-			)
-		}
-
 		var initiatePaymentPayload initiatePaymentRequest
-		err = json.Unmarshal(dataBytes, &initiatePaymentPayload)
+
+		err := json.Unmarshal(payload.Data, &initiatePaymentPayload)
 		if err != nil {
-			return r.errorRabbitMQResponse(
-				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err),
-			)
+			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "%v", err))
 		}
 
 		return r.handleInitiatePayment(initiatePaymentPayload)
 
 	case "polling_transaction":
-		dataBytes, err := json.Marshal(payload.Data)
-		if err != nil {
-			return r.errorRabbitMQResponse(
-				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to marshal request: %v", err),
-			)
-		}
+		var pollingTransactionPayload pollingTransactionRequest
 
-		var pollingTransactionPayload postgres.PollingTransactionRequest
-		err = json.Unmarshal(dataBytes, &pollingTransactionPayload)
+		err := json.Unmarshal(payload.Data, &pollingTransactionPayload)
 		if err != nil {
-			return r.errorRabbitMQResponse(
-				pkg.Errorf(pkg.INTERNAL_ERROR, "failed to unmarshal request: %v", err),
-			)
+			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "%v", err))
 		}
 
 		return r.handlePollingTransaction(pollingTransactionPayload)

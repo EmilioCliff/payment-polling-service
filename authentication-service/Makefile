@@ -1,7 +1,7 @@
 SERVICE=authentication-service
 
 createMigrate:
-	migrate create -ext sql -dir db/migrations -seq init_schema
+	migrate create -ext sql -dir internal/postgres/migrations -seq init_schema
 
 migrateup:
 	migrate -path db/migrations -database "$(DB_URL)" -verbose up

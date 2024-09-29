@@ -3,9 +3,9 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/workers"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
@@ -14,15 +14,15 @@ import (
 )
 
 type initiatePaymentRequest struct {
-	UserID      int64  `json:"user_id" binding:"required"`
-	Action      string `json:"action" binding:"required"`
-	Amount      int64  `json:"amount" binding:"required"`
-	PhoneNumber string `json:"phone_number" binding:"required"`
-	NetworkCode string `json:"network_code" binding:"required"`
-	Naration    string `json:"naration" binding:"required"`
+	Email       string `json:"email"`
+	Action      string `json:"action"`
+	Amount      int64  `json:"amount"`
+	PhoneNumber string `json:"phone_number"`
+	NetworkCode string `json:"network_code"`
+	Naration    string `json:"naration"`
 }
 
-type InitiatePaymentResponse struct {
+type initiatePaymentResponse struct {
 	TransactionID string `json:"transaction_id"`
 	PaymentStatus bool   `json:"payment_status"`
 	Action        string `json:"action"`
@@ -39,7 +39,7 @@ func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
 		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create transactionID: %v", err))
 	}
 
-	userData, err := r.client.GetUser(ctx, &pb.GetUserRequest{UserId: req.UserID})
+	userData, err := r.client.GetUser(ctx, &pb.GetUserRequest{Email: req.Email})
 	if err != nil {
 		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to get user data from auth: %v", err))
 	}
@@ -61,26 +61,27 @@ func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
 
 	payload := workers.SendPaymentWithdrawalRequestPayload{
 		TransactionID:      transactionID,
-		UserID:             req.UserID,
+		UserID:             userData.GetUserId(),
 		Action:             req.Action,
 		Amount:             req.Amount,
 		PhoneNumber:        req.PhoneNumber,
 		NetworkCode:        req.NetworkCode,
 		Naration:           req.Naration,
 		PaydUsername:       userData.GetPaydUsername(),
+		PaydAccountID:      userData.GetPaydAccountId(),
 		PaydPasswordApiKey: passwordApiKey,
 		PaydUsernameApiKey: usernameApiKey,
 	}
 
 	switch req.Action {
 	case "payment":
-		err = r.distributor.DistributeSendPaymentRequestTask(ctx, payload, opts...)
+		err = r.Distributor.DistributeSendPaymentRequestTask(ctx, payload, opts...)
 		if err != nil {
 			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to distribute payment task: %v", err))
 		}
 
 	case "withdrawal":
-		err = r.distributor.DistributeSendWithdrawalRequestTask(ctx, payload, opts...)
+		err = r.Distributor.DistributeSendWithdrawalRequestTask(ctx, payload, opts...)
 		if err != nil {
 			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to distribute payment task: %v", err))
 		}
@@ -89,11 +90,10 @@ func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
 		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INVALID_ERROR, "invalid action: %s", req.Action))
 	}
 
-	rsp := postgres.InitiatePaymentResponse{
-		TransactionID: transactionID,
+	rsp := initiatePaymentResponse{
+		TransactionID: transactionID.String(),
 		PaymentStatus: false,
 		Action:        req.Action,
-		Amount:        int32(req.Amount),
 	}
 
 	rspBytes, err := json.Marshal(rsp)
@@ -104,13 +104,55 @@ func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
 	return rspBytes
 }
 
-func (r *RabbitConn) handlePollingTransaction(req postgres.PollingTransactionRequest) []byte {
+type pollingTransactionRequest struct {
+	UserID        int64  `json:"user_id"`
+	TransactionId string `json:"transaction_id"`
+}
+
+type pollingTransactionResponse struct {
+	TransactionID      string `json:"transaction_id"`
+	PaydTransactionRef string `json:"payd_transaction_ref"`
+	Remarks            string `json:"remarks"`
+	Action             string `json:"action"`
+	Amount             int32  `json:"amount"`
+	PhoneNumber        string `json:"phone_number"`
+	NetworkCode        string `json:"network_code"`
+	Naration           string `json:"naration"`
+	PaymentStatus      bool   `json:"payment_status"`
+}
+
+func (r *RabbitConn) handlePollingTransaction(req pollingTransactionRequest) []byte {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
-	rsp, err := r.store.PollingTransaction(ctx, req)
+	log.Println(req)
+
+	id, err := uuid.Parse(req.TransactionId)
 	if err != nil {
-		return r.errorRabbitMQResponse(pkg.Errorf(err.Code, "failed to get transaction in rebbit: %v", err.Message))
+		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INVALID_ERROR, "invalid transaction id: %v", err))
+	}
+
+	transaction, err := r.TransactionRepository.PollingTransaction(ctx, id)
+	if err != nil {
+		pkgError, _ := err.(*pkg.Error)
+
+		return r.errorRabbitMQResponse(pkg.Errorf(pkgError.Code, pkgError.Message))
+	}
+
+	if transaction.UserID != req.UserID {
+		return r.errorRabbitMQResponse(pkg.Errorf(pkg.AUTHENTICATION_ERROR, "cannot access this transaction"))
+	}
+
+	rsp := pollingTransactionResponse{
+		TransactionID:      transaction.TransactionID.String(),
+		PaydTransactionRef: transaction.PaydTransactionRef,
+		Remarks:            transaction.Message,
+		Action:             transaction.Action,
+		Amount:             transaction.Amount,
+		PhoneNumber:        transaction.PhoneNumber,
+		NetworkCode:        transaction.NetworkCode,
+		Naration:           transaction.Narration,
+		PaymentStatus:      transaction.Status,
 	}
 
 	rspBytes, marshalErr := json.Marshal(rsp)

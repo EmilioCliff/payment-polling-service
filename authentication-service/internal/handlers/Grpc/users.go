@@ -67,7 +67,7 @@ func (s *GRPCServer) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*
 		)
 	}
 
-	accessToken, err := s.maker.CreateToken(user.Email, s.config.TOKEN_DURATION)
+	accessToken, err := s.maker.CreateToken(user.Email, user.ID, s.config.TOKEN_DURATION)
 	if err != nil {
 		grpcCode := convertPkgError(pkg.ErrorCode(err))
 
@@ -90,7 +90,7 @@ func (s *GRPCServer) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*
 }
 
 func (s *GRPCServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	user, err := s.UserRepository.GetUserByID(ctx, req.GetUserId())
+	user, err := s.UserRepository.GetUser(ctx, req.GetEmail())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "user not found")
@@ -100,6 +100,7 @@ func (s *GRPCServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.G
 	}
 
 	return &pb.GetUserResponse{
+		UserId:          user.ID,
 		PaydUsername:    user.PaydUsername,
 		PaydUsernameKey: user.PaydUsernameKey,
 		PaydPasswordKey: user.PaydPasswordKey,

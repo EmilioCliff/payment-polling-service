@@ -146,6 +146,7 @@ func TestRabbitConn_HandleLoginUser(t *testing.T) {
 
 	accessToken, _ := r.rabbitConn.Maker.CreateToken(
 		"jane@gmail.com",
+		1,
 		r.rabbitConn.Config.TOKEN_DURATION,
 	)
 

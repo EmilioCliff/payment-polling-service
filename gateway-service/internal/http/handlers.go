@@ -77,8 +77,22 @@ func (s *HttpServer) handlePaymentPolling(ctx *gin.Context) {
 		return
 	}
 
+	value, exists := ctx.Get(authorizationPayloadKey)
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, pkg.ErrorResponse("Missing token payload", http.StatusUnauthorized))
+
+		return
+	}
+
+	payload, ok := value.(*pkg.Payload)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "type assertion failed"})
+
+		return
+	}
+
 	// implemented only RabbitMQ communication channel with payment service.
-	statusCode, rsp := s.RabbitService.PollTransactionViaRabbit(req)
+	statusCode, rsp := s.RabbitService.PollTransactionViaRabbit(req, payload.UserID)
 	if statusCode != http.StatusOK {
 		ctx.JSON(statusCode, pkg.ErrorResponse(rsp.Message, rsp.StatusCode))
 

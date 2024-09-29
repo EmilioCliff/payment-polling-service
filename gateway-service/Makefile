@@ -20,4 +20,7 @@ revive:
 
 	revive -formatter friendly ./...
 
-.PHONY: test race-test lint coverage revive
+statik:
+	statik -src=./docs/swagger -dest=./docs
+
+.PHONY: test race-test lint coverage revive statik

@@ -3,7 +3,7 @@ module github.com/EmilioCliff/payment-polling-app/payment-service
 go 1.21.6
 
 require (
-	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240822075525-b8a22d69e841
+	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240927090013-9973796ac3ea
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/google/uuid v1.6.0

@@ -10,7 +10,7 @@ type MockRabbitMQService struct {
 	RegisterUserViaRabbitFunc    func(services.RegisterUserRequest) (int, services.RegisterUserResponse)
 	LoginUserViaRabbitFunc       func(services.LoginUserRequest) (int, services.LoginUserResponse)
 	InitiatePaymentViaRabbitFunc func(services.InitiatePaymentRequest) (int, services.InitiatePaymentResponse)
-	PollTransactionViaRabbitFunc func(services.PollingTransactionRequest) (int, services.PollingTransactionResponse)
+	PollTransactionViaRabbitFunc func(services.PollingTransactionRequest, int64) (int, services.PollingTransactionResponse)
 
 	SetConsumerFunc func(topics []string) error
 }
@@ -27,8 +27,11 @@ func (m *MockRabbitMQService) InitiatePaymentViaRabbit(req services.InitiatePaym
 	return m.InitiatePaymentViaRabbitFunc(req)
 }
 
-func (m *MockRabbitMQService) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, services.PollingTransactionResponse) {
-	return m.PollTransactionViaRabbitFunc(req)
+func (m *MockRabbitMQService) PollTransactionViaRabbit(
+	req services.PollingTransactionRequest,
+	userID int64,
+) (int, services.PollingTransactionResponse) {
+	return m.PollTransactionViaRabbitFunc(req, userID)
 }
 
 func (m *MockRabbitMQService) SetConsumer(topics []string, _ chan struct{}) error {

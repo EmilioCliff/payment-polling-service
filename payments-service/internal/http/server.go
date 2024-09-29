@@ -1,27 +1,20 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 type HttpServer struct {
 	router *gin.Engine
-	store  postgres.Store
+
+	TransactionRepository repository.TransactionRepository
 }
 
 func NewHttpServer() (*HttpServer, error) {
 	server := &HttpServer{}
-
-	store, err := postgres.GetStore()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new store in server: %v", err)
-	}
-
-	server.store = store
 
 	server.setRoutes()
 

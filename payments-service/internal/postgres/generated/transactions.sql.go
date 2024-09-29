@@ -13,17 +13,18 @@ import (
 
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO transactions (
-    transaction_id, payd_transaction_ref,user_id, action, amount, phone_number, network_node, narration
+    transaction_id, payd_transaction_ref,user_id, message, action, amount, phone_number, network_node, narration
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
-RETURNING transaction_id, payd_transaction_ref, user_id, action, amount, phone_number, network_node, narration, status, updated_at, created_at
+RETURNING transaction_id, payd_transaction_ref, user_id, action, amount, phone_number, network_node, narration, status, updated_at, created_at, message
 `
 
 type CreateTransactionParams struct {
 	TransactionID      uuid.UUID `json:"transaction_id"`
 	PaydTransactionRef string    `json:"payd_transaction_ref"`
 	UserID             int64     `json:"user_id"`
+	Message            string    `json:"message"`
 	Action             string    `json:"action"`
 	Amount             int32     `json:"amount"`
 	PhoneNumber        string    `json:"phone_number"`
@@ -36,6 +37,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		arg.TransactionID,
 		arg.PaydTransactionRef,
 		arg.UserID,
+		arg.Message,
 		arg.Action,
 		arg.Amount,
 		arg.PhoneNumber,
@@ -55,12 +57,13 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.Status,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Message,
 	)
 	return i, err
 }
 
 const getTransaction = `-- name: GetTransaction :one
-SELECT transaction_id, payd_transaction_ref, user_id, action, amount, phone_number, network_node, narration, status, updated_at, created_at FROM transactions
+SELECT transaction_id, payd_transaction_ref, user_id, action, amount, phone_number, network_node, narration, status, updated_at, created_at, message FROM transactions
 WHERE transaction_id = $1
 `
 
@@ -79,6 +82,7 @@ func (q *Queries) GetTransaction(ctx context.Context, transactionID uuid.UUID) (
 		&i.Status,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Message,
 	)
 	return i, err
 }
@@ -86,18 +90,27 @@ func (q *Queries) GetTransaction(ctx context.Context, transactionID uuid.UUID) (
 const updateTransaction = `-- name: UpdateTransaction :one
 UPDATE transactions
 SET status = $2,
-    updated_at = now()
+    updated_at = now(),
+    payd_transaction_ref = $3,
+    message = $4
 WHERE transaction_id = $1
-RETURNING transaction_id, payd_transaction_ref, user_id, action, amount, phone_number, network_node, narration, status, updated_at, created_at
+RETURNING transaction_id, payd_transaction_ref, user_id, action, amount, phone_number, network_node, narration, status, updated_at, created_at, message
 `
 
 type UpdateTransactionParams struct {
-	TransactionID uuid.UUID `json:"transaction_id"`
-	Status        bool      `json:"status"`
+	TransactionID      uuid.UUID `json:"transaction_id"`
+	Status             bool      `json:"status"`
+	PaydTransactionRef string    `json:"payd_transaction_ref"`
+	Message            string    `json:"message"`
 }
 
 func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (Transaction, error) {
-	row := q.db.QueryRow(ctx, updateTransaction, arg.TransactionID, arg.Status)
+	row := q.db.QueryRow(ctx, updateTransaction,
+		arg.TransactionID,
+		arg.Status,
+		arg.PaydTransactionRef,
+		arg.Message,
+	)
 	var i Transaction
 	err := row.Scan(
 		&i.TransactionID,
@@ -111,6 +124,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.Status,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Message,
 	)
 	return i, err
 }

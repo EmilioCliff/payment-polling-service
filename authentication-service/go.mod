@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.23.1
 
 require (
-	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240914231624-ad4dccafcec1
+	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240927090013-9973796ac3ea
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/gin-gonic/gin v1.10.0

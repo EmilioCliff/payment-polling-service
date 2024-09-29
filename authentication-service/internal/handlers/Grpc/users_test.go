@@ -87,8 +87,8 @@ func TestGRPCServer_RegisterUser(t *testing.T) {
 	}
 }
 
-func mockGetUserByID(id int64) (*repository.User, error) {
-	if id == foundID {
+func mockGetUser(email string) (*repository.User, error) {
+	if email == "found@gmail.com" {
 		return &repository.User{
 			ID:              foundID,
 			FullName:        gofakeit.Name(),
@@ -100,7 +100,7 @@ func mockGetUserByID(id int64) (*repository.User, error) {
 			PaydAccountID:   "account_id",
 			CreatedAt:       TestTime,
 		}, nil
-	} else if id == notFoundID {
+	} else if email == "notfound@gmail.com" {
 		return nil, sql.ErrNoRows
 	}
 
@@ -110,7 +110,7 @@ func mockGetUserByID(id int64) (*repository.User, error) {
 func TestGRPCServer_GetUser(t *testing.T) {
 	s := NewTestGRPCServer()
 
-	s.UserRepository.GetUserByIDFunc = mockGetUserByID
+	s.UserRepository.GetUserFunc = mockGetUser
 
 	tests := []struct {
 		name    string
@@ -120,8 +120,9 @@ func TestGRPCServer_GetUser(t *testing.T) {
 	}{
 		{
 			name: "User found",
-			args: &pb.GetUserRequest{UserId: foundID},
+			args: &pb.GetUserRequest{Email: "found@gmail.com"},
 			want: &pb.GetUserResponse{
+				UserId:          32,
 				PaydUsername:    "username",
 				PaydUsernameKey: "user_key",
 				PaydPasswordKey: "pass_key",
@@ -131,13 +132,13 @@ func TestGRPCServer_GetUser(t *testing.T) {
 		},
 		{
 			name:    "User not found",
-			args:    &pb.GetUserRequest{UserId: notFoundID},
+			args:    &pb.GetUserRequest{Email: "notfound@gmail.com"},
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name:    "internal error",
-			args:    &pb.GetUserRequest{UserId: errorID},
+			args:    &pb.GetUserRequest{Email: "error@gmail.com"},
 			want:    nil,
 			wantErr: true,
 		},

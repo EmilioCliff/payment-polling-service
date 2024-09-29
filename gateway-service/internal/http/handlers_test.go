@@ -130,7 +130,7 @@ func mockInitiatePaymentViaRabbit(_ services.InitiatePaymentRequest) (int, servi
 func TestHttpServer_handleInitiatePayment(t *testing.T) {
 	s := NewTestHttpServer()
 
-	accessToken, err := s.server.maker.CreateToken("user", time.Minute)
+	accessToken, err := s.server.maker.CreateToken("user", 1, time.Minute)
 	require.NoError(t, err)
 
 	// change here to the communication channel you are using
@@ -144,7 +144,7 @@ func TestHttpServer_handleInitiatePayment(t *testing.T) {
 		{
 			name: "success",
 			req: services.InitiatePaymentRequest{
-				UserID:      1,
+				Email:       gofakeit.Email(),
 				Action:      "withdrawal",
 				Amount:      200,
 				PhoneNumber: "phone_number",
@@ -178,7 +178,7 @@ func TestHttpServer_handleInitiatePayment(t *testing.T) {
 	}
 }
 
-func mockPollTransactionViaRabbit(req services.PollingTransactionRequest) (int, services.PollingTransactionResponse) {
+func mockPollTransactionViaRabbit(req services.PollingTransactionRequest, userID int64) (int, services.PollingTransactionResponse) {
 	if req.TransactionId == "bad_gateway" {
 		return http.StatusBadGateway, services.PollingTransactionResponse{Message: "Bad gateway"}
 	}
@@ -189,7 +189,7 @@ func mockPollTransactionViaRabbit(req services.PollingTransactionRequest) (int, 
 func TestHttpServer_handlePaymentPolling(t *testing.T) {
 	s := NewTestHttpServer()
 
-	accessToken, err := s.server.maker.CreateToken("user", time.Minute)
+	accessToken, err := s.server.maker.CreateToken("user", 1, time.Minute)
 	require.NoError(t, err)
 
 	// change here to the communication channel you are using

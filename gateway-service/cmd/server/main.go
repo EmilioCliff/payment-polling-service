@@ -73,12 +73,7 @@ func main() {
 
 	log.Printf("Starting server on port: %s", config.SERVER_ADDRESS)
 
-	err = server.Start(config.SERVER_ADDRESS)
-	if err != nil {
-		log.Printf("Failed to start gateway service: %s", err)
-	}
-
-	log.Println("Shutting down gateway service...")
+	server.Start(config.SERVER_ADDRESS)
 }
 
 // func connectToRabit(uri string) (*amqp.Connection, error) {

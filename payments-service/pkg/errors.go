@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -24,4 +25,33 @@ func Errorf(code string, format string, args ...interface{}) *Error {
 		Code:    code,
 		Message: fmt.Sprintf(format, args...),
 	}
+}
+
+func ErrorCode(err error) string {
+	var e *Error
+
+	if err == nil {
+		return ""
+	} else if errors.As(err, &e) {
+		return e.Code
+	}
+
+	return INTERNAL_ERROR
+}
+
+func ErrorMessage(err error) string {
+	var e *Error
+
+	if err == nil {
+		return ""
+	} else if errors.As(err, &e) {
+		return e.Message
+	}
+
+	return "Internal error."
+}
+
+// Error implements the error interface. Not used by the application otherwise.
+func (e *Error) Error() string {
+	return fmt.Sprintf("error: code=%s message=%s", e.Code, e.Message)
 }

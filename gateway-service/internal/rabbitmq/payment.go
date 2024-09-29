@@ -12,9 +12,14 @@ import (
 )
 
 func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentRequest) (int, services.InitiatePaymentResponse) {
+	dataBytes, err := json.Marshal(req)
+	if err != nil {
+		return http.StatusInternalServerError, services.InitiatePaymentResponse{Message: "internal error", StatusCode: http.StatusInternalServerError}
+	}
+
 	payload := services.Payload{
 		Name: "initiate_payment",
-		Data: req,
+		Data: dataBytes,
 	}
 
 	payloadRabitData, err := json.Marshal(payload)
@@ -78,15 +83,25 @@ func (r *RabbitHandler) InitiatePaymentViaRabbit(req services.InitiatePaymentReq
 }
 
 type pollingTransactionRabbitRequest struct {
+	UserID        int64  `json:"user_id"`
 	TransactionId string `json:"transaction_id"`
 }
 
-func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransactionRequest) (int, services.PollingTransactionResponse) {
+func (r *RabbitHandler) PollTransactionViaRabbit(req services.PollingTransactionRequest, userID int64) (int, services.PollingTransactionResponse) {
+	dataBytes, err := json.Marshal(pollingTransactionRabbitRequest{
+		UserID:        userID,
+		TransactionId: req.TransactionId,
+	})
+	if err != nil {
+		return http.StatusInternalServerError, services.PollingTransactionResponse{
+			Message:    "internal error",
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
+
 	payload := services.Payload{
 		Name: "polling_transaction",
-		Data: pollingTransactionRabbitRequest{
-			TransactionId: req.TransactionId,
-		},
+		Data: dataBytes,
 	}
 
 	payloadRabitData, err := json.Marshal(payload)

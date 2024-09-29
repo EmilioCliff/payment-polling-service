@@ -28,7 +28,7 @@ func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
 	}()
 
 	req := services.InitiatePaymentRequest{
-		UserID:      1,
+		Email:       gofakeit.Email(),
 		Action:      "withdrawal",
 		Amount:      100,
 		PhoneNumber: gofakeit.Phone(),
@@ -192,7 +192,7 @@ func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
 			defer close(msgChan)
 
 			go func(statusCodeChan chan int, msgChan chan services.PollingTransactionResponse) {
-				statusCode, msg := testRabbit.rabbit.PollTransactionViaRabbit(req)
+				statusCode, msg := testRabbit.rabbit.PollTransactionViaRabbit(req, 1)
 				statusCodeChan <- statusCode
 				msgChan <- msg
 			}(statusCodeChan, msgChan)

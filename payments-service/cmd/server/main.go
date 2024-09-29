@@ -1,80 +1,97 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/http"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/rabbitmq"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/workers"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
+	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	"github.com/hibiken/asynq"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
 	config, err := pkg.LoadConfig(".")
 	if err != nil {
 		log.Printf("error loading config: %s", err)
+
 		return
 	}
 
-	rabbit, err := rabbitmq.NewRabbitConn()
+	store := postgres.NewStore(config)
+
+	err = store.Start()
 	if err != nil {
-		log.Printf("error connecting to rabbit: %s", err)
+		log.Printf("error starting store: %s", err)
+
 		return
 	}
 
-	server, err := http.NewHttpServer()
-	if err != nil {
-		log.Printf("error starting server: %s", err)
-		return
-	}
+	transactionRepo := postgres.NewTransactionService(store)
 
 	redisOpt := asynq.RedisClientOpt{
 		Addr: config.REDDIS_ADDR,
 		DB:   1,
 	}
 
-	processor, err := workers.NewRedisTaskProcessor(&redisOpt)
+	distributor := workers.NewRedisTaskDistributor(&redisOpt)
+
+	processor, err := workers.NewRedisTaskProcessor(&redisOpt, config)
 	if err != nil {
 		log.Printf("error starting processor: %s", err)
+
 		return
 	}
 
-	processorErrChan := make(chan error, 1)
-	rabbitErrChan := make(chan error, 1)
+	clientConn, err := grpc.NewClient(config.AUTH_GRPC_URL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Printf("error connecting to auth grpc server: %s", err)
 
-	go func() {
-		processorErrChan <- processor.Start()
-	}()
-
-	go func() {
-		rabbitErrChan <- rabbit.SetConsumer([]string{"payments.initiate_payment", "payments.poll_payments"})
-	}()
-
-	select {
-	case err := <-processorErrChan:
-		if err != nil {
-			log.Fatalf("Error starting processor: %v", err)
-		}
-
-		close(processorErrChan)
 		return
-	case err := <-rabbitErrChan:
-		if err != nil {
-			log.Fatalf("Error starting rabbit consumer: %v", err)
-		}
+	}
+	defer clientConn.Close()
 
-		close(rabbitErrChan)
+	client := pb.NewAuthenticationServiceClient(clientConn)
+
+	rabbit := rabbitmq.NewRabbitConn(config, client)
+
+	err = rabbit.ConnectToRabbit()
+	if err != nil {
+		log.Printf("error connecting to rabbit: %s", err)
+
 		return
-	default:
-		fmt.Println("Both processor and rabbit consumer started successfully.")
 	}
 
-	log.Println("Starting server: ", config.HTTP_PORT)
-	err = server.Start(config.HTTP_PORT)
+	server, err := http.NewHttpServer()
 	if err != nil {
 		log.Printf("error starting server: %s", err)
+
 		return
+	}
+
+	processor.TransactionRepository = transactionRepo
+
+	rabbit.TransactionRepository = transactionRepo
+	rabbit.Distributor = distributor
+
+	server.TransactionRepository = transactionRepo
+
+	go func() {
+		processor.Start()
+	}()
+
+	go func() {
+		rabbit.SetConsumer([]string{"payments.initiate_payment", "payments.poll_payments"})
+	}()
+
+	log.Println("Starting server on port", config.HTTP_PORT)
+
+	err = server.Start(config.HTTP_PORT)
+	if err != nil {
+		log.Fatalf("Error starting server: %v", err)
 	}
 }

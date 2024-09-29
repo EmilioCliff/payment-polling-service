@@ -5,6 +5,6 @@ protoc:
     proto/*.proto
 
 mock:
-	mockgen -package mock -destination ./mock/mock.go github.com/EmilioCliff/payment-polling-service/shared-grpc/pb AuthenticationServiceClient
+	mockgen -package mockpb -destination ./mock/mock.go github.com/EmilioCliff/payment-polling-service/shared-grpc/pb AuthenticationServiceClient
 
 .PHONY: protoc mock

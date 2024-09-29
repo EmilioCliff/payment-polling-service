@@ -74,6 +74,8 @@ func NewTestRabbitHandler() (*TestRabbitHandler, error) {
 }
 
 func TestRabbitHandler_TestSetConsumer(t *testing.T) {
+	pkg.SkipCI(t)
+
 	testRabbit, err := NewTestRabbitHandler()
 	require.NoError(t, err)
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/brianvoe/gofakeit"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,8 @@ import (
 var TestTime = time.Date(2024, time.September, 18, 12, 0, 0, 0, time.UTC)
 
 func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
+	pkg.SkipCI(t)
+
 	testRabbit, err := NewTestRabbitHandler()
 	require.NoError(t, err)
 

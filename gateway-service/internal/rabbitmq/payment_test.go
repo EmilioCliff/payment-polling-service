@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/gateway-service/internal/services"
+	"github.com/EmilioCliff/payment-polling-app/gateway-service/pkg"
 	"github.com/brianvoe/gofakeit"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -15,6 +16,8 @@ import (
 )
 
 func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
+	pkg.SkipCI(t)
+
 	testRabbit, err := NewTestRabbitHandler()
 	require.NoError(t, err)
 

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/repository"
-	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/workers"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -24,7 +24,7 @@ type RabbitConn struct {
 	config pkg.Config
 
 	client                pb.AuthenticationServiceClient
-	Distributor           workers.TaskDistributor
+	Distributor           services.TaskDistributor
 	TransactionRepository repository.TransactionRepository
 }
 

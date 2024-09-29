@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/hibiken/asynq"
 )
@@ -17,7 +18,7 @@ const SendWithdrawalRequestTask = "task:withdrawal_request"
 
 func (distributor *RedisTaskDistributor) DistributeSendWithdrawalRequestTask(
 	ctx context.Context,
-	payload SendPaymentWithdrawalRequestPayload,
+	payload services.SendPaymentWithdrawalRequestPayload,
 	opt ...asynq.Option,
 ) error {
 	jsonWithdrawalRequestPayload, err := json.Marshal(payload)
@@ -38,13 +39,10 @@ func (distributor *RedisTaskDistributor) DistributeSendWithdrawalRequestTask(
 }
 
 func (processor *RedisTaskProcessor) ProcessWithdrawalRequestTask(ctx context.Context, task *asynq.Task) error {
-	var taskPayload SendPaymentWithdrawalRequestPayload
+	var taskPayload services.SendPaymentWithdrawalRequestPayload
 	if err := json.Unmarshal(task.Payload(), &taskPayload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
-
-	url := "https://api.mypayd.app/api/v2/withdrawal"
-	method := "POST"
 
 	payload := map[string]interface{}{
 		"account_id":   taskPayload.PaydAccountID,
@@ -64,7 +62,7 @@ func (processor *RedisTaskProcessor) ProcessWithdrawalRequestTask(ctx context.Co
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest(method, url, jsonString)
+	req, err := http.NewRequest(http.MethodPost, processor.withdrawalUrl, jsonString)
 	if err != nil {
 		return fmt.Errorf("Failed to create request: %w", err)
 	}

@@ -9,30 +9,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
 
 const SendPaymentRequestTask = "task:payment_request"
 
-type SendPaymentWithdrawalRequestPayload struct {
-	TransactionID      uuid.UUID `json:"transaction_id"`
-	UserID             int64     `json:"user_id"`
-	Action             string    `json:"action"`
-	Amount             int64     `json:"amount"`
-	PhoneNumber        string    `json:"phone_number"`
-	NetworkCode        string    `json:"network_code"`
-	Naration           string    `json:"naration"`
-	PaydUsername       string    `json:"payd_username"`
-	PaydAccountID      string    `json:"payd_account_id"`
-	PaydPasswordApiKey string    `json:"payd_password_api_key"`
-	PaydUsernameApiKey string    `json:"payd_username_api_key"`
-}
-
 func (distributor *RedisTaskDistributor) DistributeSendPaymentRequestTask(
 	ctx context.Context,
-	payload SendPaymentWithdrawalRequestPayload,
+	payload services.SendPaymentWithdrawalRequestPayload,
 	opt ...asynq.Option,
 ) error {
 	jsonPaymentRequestPayload, err := json.Marshal(payload)
@@ -53,13 +39,10 @@ func (distributor *RedisTaskDistributor) DistributeSendPaymentRequestTask(
 }
 
 func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Context, task *asynq.Task) error {
-	var taskPayload SendPaymentWithdrawalRequestPayload
+	var taskPayload services.SendPaymentWithdrawalRequestPayload
 	if err := json.Unmarshal(task.Payload(), &taskPayload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
-
-	url := "https://api.mypayd.app/api/v2/payments"
-	method := "POST"
 
 	payload := map[string]interface{}{
 		"username":     taskPayload.PaydUsername,
@@ -80,7 +63,7 @@ func (processor *RedisTaskProcessor) ProcessPaymentRequestTask(ctx context.Conte
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest(method, url, jsonString)
+	req, err := http.NewRequest(http.MethodPost, processor.paymentUrl, jsonString)
 	if err != nil {
 		return fmt.Errorf("Failed to create request: %w", err)
 	}

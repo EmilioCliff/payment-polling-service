@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/repository"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/services"
 	"github.com/hibiken/asynq"
 )
 
 func (p *RedisTaskProcessor) createTransaction(
 	ctx context.Context,
-	req SendPaymentWithdrawalRequestPayload,
+	req services.SendPaymentWithdrawalRequestPayload,
 	transactionRef string,
 	message string,
 	status string,

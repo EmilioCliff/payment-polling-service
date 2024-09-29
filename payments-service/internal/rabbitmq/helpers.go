@@ -9,14 +9,14 @@ import (
 )
 
 type errorResponse struct {
-	StatusCode int    `json:"status_code"`
-	Message    string `json:"message"`
+	Status  int    `json:"status"`
+	Message string `json:"message"`
 }
 
 func (r *RabbitConn) errorRabbitMQResponse(pkgErr *pkg.Error) []byte {
 	errorRsp := errorResponse{
-		StatusCode: r.convertPkgError(pkgErr.Code),
-		Message:    pkgErr.Message,
+		Status:  convertPkgError(pkgErr.Code),
+		Message: pkgErr.Message,
 	}
 
 	jsonResponse, err := json.Marshal(errorRsp)
@@ -29,7 +29,7 @@ func (r *RabbitConn) errorRabbitMQResponse(pkgErr *pkg.Error) []byte {
 	return jsonResponse
 }
 
-func (r RabbitConn) convertPkgError(code string) int {
+func convertPkgError(code string) int {
 	switch code {
 	case pkg.ALREADY_EXISTS_ERROR:
 		return http.StatusConflict

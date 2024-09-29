@@ -10,7 +10,7 @@ asynq:
 	docker run --name asynq -p 8383:8383 --network payment-polling-service_default hibiken/asynqmon --redis-addr=redis:6379 --redis-db=1 --port 8383
 
 mock:
-	mockgen -package mock -destination ./internal/postgres/mock/store.go github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres/generated Querier
+	mockgen -package mockdb -destination ./internal/postgres/mock/store.go github.com/EmilioCliff/payment-polling-app/payment-service/internal/postgres/generated Querier
 
 test:
 	@echo "Running tests for $(SERVICE)..."

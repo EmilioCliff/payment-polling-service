@@ -3,9 +3,9 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/workers"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/EmilioCliff/payment-polling-service/shared-grpc/pb"
@@ -26,8 +26,6 @@ type initiatePaymentResponse struct {
 	TransactionID string `json:"transaction_id"`
 	PaymentStatus bool   `json:"payment_status"`
 	Action        string `json:"action"`
-	Message       string `json:"message,omitempty"`
-	Status        int    `json:"status,omitempty"`
 }
 
 func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
@@ -59,7 +57,7 @@ func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
 		return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to decrypt payd username key: %v", err))
 	}
 
-	payload := workers.SendPaymentWithdrawalRequestPayload{
+	payload := services.SendPaymentWithdrawalRequestPayload{
 		TransactionID:      transactionID,
 		UserID:             userData.GetUserId(),
 		Action:             req.Action,
@@ -83,7 +81,7 @@ func (r *RabbitConn) handleInitiatePayment(req initiatePaymentRequest) []byte {
 	case "withdrawal":
 		err = r.Distributor.DistributeSendWithdrawalRequestTask(ctx, payload, opts...)
 		if err != nil {
-			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to distribute payment task: %v", err))
+			return r.errorRabbitMQResponse(pkg.Errorf(pkg.INTERNAL_ERROR, "failed to distribute withdrawal task: %v", err))
 		}
 
 	default:
@@ -124,8 +122,6 @@ type pollingTransactionResponse struct {
 func (r *RabbitConn) handlePollingTransaction(req pollingTransactionRequest) []byte {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
-
-	log.Println(req)
 
 	id, err := uuid.Parse(req.TransactionId)
 	if err != nil {

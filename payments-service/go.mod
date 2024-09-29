@@ -3,12 +3,14 @@ module github.com/EmilioCliff/payment-polling-app/payment-service
 go 1.21.6
 
 require (
-	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240927090013-9973796ac3ea
+	github.com/EmilioCliff/payment-polling-service/shared-grpc v0.0.0-20240929142340-94cf9baeb0fe
+	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.24.1
 	github.com/jackc/pgx/v5 v5.6.0
+	github.com/lib/pq v1.10.9
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -41,7 +43,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

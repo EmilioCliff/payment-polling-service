@@ -7,28 +7,32 @@ import (
 	"time"
 
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/repository"
+	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/services"
 	"github.com/EmilioCliff/payment-polling-app/payment-service/pkg"
 	"github.com/hibiken/asynq"
 )
 
 const QueueCritical = "critical"
 
-var _ TaskProcessor = (*RedisTaskProcessor)(nil)
+var _ services.TaskProcessor = (*RedisTaskProcessor)(nil)
 
-type TaskProcessor interface {
-	Start() error
-	ProcessPaymentRequestTask(ctx context.Context, task *asynq.Task) error
-	ProcessWithdrawalRequestTask(ctx context.Context, task *asynq.Task) error
-}
+// type TaskProcessor interface {
+// 	Start() error
+// 	ProcessPaymentRequestTask(ctx context.Context, task *asynq.Task) error
+// 	ProcessWithdrawalRequestTask(ctx context.Context, task *asynq.Task) error
+// }
 
 type RedisTaskProcessor struct {
 	server *asynq.Server
 	config pkg.Config
 
+	paymentUrl    string
+	withdrawalUrl string
+
 	TransactionRepository repository.TransactionRepository
 }
 
-func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, config pkg.Config) (*RedisTaskProcessor, error) {
+func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, config pkg.Config) *RedisTaskProcessor {
 	server := asynq.NewServer(redisOpt, asynq.Config{
 		RetryDelayFunc: asynq.RetryDelayFunc(CustomRetryDelayFunc),
 		ErrorHandler:   asynq.ErrorHandlerFunc(ReportError),
@@ -37,7 +41,12 @@ func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, config pkg.Config) (*
 		},
 	})
 
-	return &RedisTaskProcessor{server: server, config: config}, nil
+	return &RedisTaskProcessor{
+		server:        server,
+		config:        config,
+		paymentUrl:    "https://api.mypayd.app/api/v2/payments",
+		withdrawalUrl: "https://api.mypayd.app/api/v2/withdrawal",
+	}
 }
 
 func (processor *RedisTaskProcessor) Start() error {

@@ -111,9 +111,9 @@ func (t *TransactionRepository) UpdateTransaction(
 			if pqErr.Code == "23503" {
 				return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "transaction does not exist")
 			}
-
-			return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "failed to update transaction")
 		}
+
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "failed to update transaction")
 	}
 
 	return &repository.Transaction{

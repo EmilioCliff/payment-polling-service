@@ -40,7 +40,7 @@ func main() {
 
 	distributor := workers.NewRedisTaskDistributor(&redisOpt)
 
-	processor, err := workers.NewRedisTaskProcessor(&redisOpt, config)
+	processor := workers.NewRedisTaskProcessor(&redisOpt, config)
 	if err != nil {
 		log.Printf("error starting processor: %s", err)
 
@@ -66,12 +66,7 @@ func main() {
 		return
 	}
 
-	server, err := http.NewHttpServer()
-	if err != nil {
-		log.Printf("error starting server: %s", err)
-
-		return
-	}
+	server := http.NewHttpServer()
 
 	processor.TransactionRepository = transactionRepo
 

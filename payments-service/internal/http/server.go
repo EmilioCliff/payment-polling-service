@@ -13,12 +13,12 @@ type HttpServer struct {
 	TransactionRepository repository.TransactionRepository
 }
 
-func NewHttpServer() (*HttpServer, error) {
+func NewHttpServer() *HttpServer {
 	server := &HttpServer{}
 
 	server.setRoutes()
 
-	return server, nil
+	return server
 }
 
 func (s *HttpServer) setRoutes() {

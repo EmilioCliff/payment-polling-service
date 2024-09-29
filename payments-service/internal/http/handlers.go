@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/EmilioCliff/payment-polling-app/payment-service/internal/repository"
@@ -36,7 +35,6 @@ func (s *HttpServer) handleCallBack(ctx *gin.Context) {
 	}
 
 	payload, _ := req.(map[string]interface{})
-	log.Println(payload)
 
 	resultCode, _ := payload["result_code"].(int)
 	transactionRef, _ := payload["transaction_reference"].(string)

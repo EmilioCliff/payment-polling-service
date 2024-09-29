@@ -3,11 +3,14 @@ package pkg
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
+	"errors"
+	"io"
 )
 
-func Decrypt(secret string, key []byte) (string, error) {
-	ciphertextBytes, err := base64.URLEncoding.DecodeString(secret)
+func Decrypt(ciphertext string, key []byte) (string, error) {
+	ciphertextBytes, err := base64.URLEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return "", err
 	}
@@ -17,8 +20,8 @@ func Decrypt(secret string, key []byte) (string, error) {
 		return "", err
 	}
 
-	if len(secret) < aes.BlockSize {
-		return "", err
+	if len(ciphertextBytes) < aes.BlockSize {
+		return "", errors.New("invalid ciphertext")
 	}
 
 	iv := ciphertextBytes[:aes.BlockSize]
@@ -28,4 +31,23 @@ func Decrypt(secret string, key []byte) (string, error) {
 	stream.XORKeyStream(ciphertextBytes, ciphertextBytes)
 
 	return string(ciphertextBytes), nil
+}
+
+func Encrypt(plaintext string, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	iv := ciphertext[:aes.BlockSize]
+
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(plaintext))
+
+	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }

@@ -133,8 +133,10 @@ func TestHTTPServer_HandleRegisterUser(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
+
 			b, err := json.Marshal(tc.args)
 			require.NoError(t, err)
+
 			req, err := http.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(b))
 			require.NoError(t, err)
 

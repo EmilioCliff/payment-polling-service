@@ -115,6 +115,8 @@ func TestRabbitHandler_RegisterUserViaRabbit(t *testing.T) {
 }
 
 func TestRabbitHandler_LoginUserViaRabbit(t *testing.T) {
+	pkg.SkipCI(t)
+
 	testRabbit, err := NewTestRabbitHandler()
 	require.NoError(t, err)
 

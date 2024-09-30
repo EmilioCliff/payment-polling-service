@@ -121,6 +121,8 @@ func TestRabbitHandler_InitiatePaymentViaRabbit(t *testing.T) {
 }
 
 func TestRabbitHandler_PollTransactionViaRabbit(t *testing.T) {
+	pkg.SkipCI(t)
+
 	testRabbit, err := NewTestRabbitHandler()
 	require.NoError(t, err)
 

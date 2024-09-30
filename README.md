@@ -2,14 +2,13 @@
 
 Welcome to the **Payment Polling System**! This repository contains a collection of microservices built with Go for the [Payd Backend Assesment](.https://github.com/getpayd-tech/backend-intern-assesment). The project demonstrates a microservices architecture built with Go, Docker, and RabbitMQ. Each service is self-contained and serves a specific purpose in the larger architecture. Navigate to each service to learn more!
 
-![Microservices Image](Microservice.drawio.png)
+![Microservices Image](Payments_Polling.png)
 
 ## Services Overview 🧩
 
-- [Gateway Service](./gateway-service/README.md) - This is the gateway/entry point to our system. Clients interact with this service and the request is forwarded to the respective service either through HTTP requests, gRPC or a rabbitMQ queue.
 - [Authentication Service](./authentication-service/README.md) - The authentication service connects to a postgres database. It serves the purpose of registering a new user and logging the user.
+- [Gateway Service](./gateway-service/README.md) - This is the gateway/entry point to our system. Clients interact with this service and the request is forwarded to the respective service either through HTTP requests, gRPC or a rabbitMQ queue.
 - [Payments Service](./payments-service/README.md) - The payments service connects to a postgres database. It serves the purpose of depositing and withdrawing funds from your Payd Wallet.
-- [Listener Service](./listener-service/README.md) - The listener is a dedicated service for setting up the rabbit queues and binds the routing key to the queues. It also redirects the message to respective services.
 
 ## Shared gRPC
 
@@ -47,18 +46,16 @@ This next step require you to have docker compose installed and to set up an acc
    ```
    # Generate private key
 
-   openssl genpkey -algorithm RSA -out rsa_key.pem -pkeyopt rsa_keygen_bits:2048
+   openssl genpkey -algorithm RSA -out my_rsa_key.pem -pkeyopt rsa_keygen_bits:2048
    ```
 
    ```
    # Generate public key
 
-   openssl rsa -pubout -in rsa_key.pem -out rsa.pub.pem
+   openssl rsa -pubout -in my_rsa_key.pem -out my_rsa_key.pub.pem
    ```
 
-   - Rename the keys name to private key to `my_rsa_key` and the public key to `my_rsa_key.pub.pem`
-
-   - Copy the public key to the `./gateway-service/pkg` and `./payments-service/pkg`
+   - Copy the public key to the `./gateway-service/pkg`
 
 3. **Run the services**
 
@@ -67,7 +64,9 @@ This next step require you to have docker compose installed and to set up an acc
    ```
 
 4. **Making Request**
-   After all the services are up you can go to the `localhost:8080/swagger/index.html`. A well documented endpoints for the gateway service and examples, here you can start interacting with the system.
+   After all the services are up you can go to the `localhost:8080/swagger/index.html`. SwaggerUI is used for the gateway service documentation with request and response examples, here you can start interacting with the system.
+
+![Microservices Image](gateway-service/docs/swagger/swagger-img.png)
 
 ## Remarks 🤝
 
